@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: weather-cli
+Version: 1.0.0
+Summary: High-quality CLI weather tool with flexible location resolution and hourly forecasts
+Requires-Python: >=3.9
+Requires-Dist: click>=8.1.0
+Requires-Dist: rich>=13.0.0

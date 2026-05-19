@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weather-cli"
+version = "1.0.0"
+description = "High-quality CLI weather tool with flexible location resolution and hourly forecasts"
+requires-python = ">=3.9"
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+weather = "weather_cli.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["weather_cli*"]
