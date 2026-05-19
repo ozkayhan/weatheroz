@@ -11,7 +11,8 @@ def run_weather_race(
     lat: float,
     lon: float,
     start_date: str,
-    end_date: str
+    end_date: str,
+    state: Any = None
 ) -> Tuple[NormalizedWeatherData, Dict[str, Any], str]:
     """Execute concurrent requests to eligible weather providers.
     
@@ -28,11 +29,32 @@ def run_weather_race(
     eligible_providers = []
     for p in providers:
         if is_historical and p.name == "MET Norway":
+            if state:
+                state.providers["MET Norway"] = {
+                    "status": "failed",
+                    "time": None,
+                    "error": "Excluded for historical query"
+                }
             continue
         eligible_providers.append(p)
         
     if not eligible_providers:
+        if state:
+            state.step_race = "failed"
+            state.last_log = "❌ Uygun hava durumu sağlayıcısı bulunamadı!"
         raise ValueError("No eligible weather providers found for the request.")
+
+    if state:
+        state.step_race = "running"
+        state.global_progress = 60
+        state.last_log = "🚀 Sağlayıcı yarışı başlatıldı, eşzamanlı istekler gönderiliyor..."
+        for p in eligible_providers:
+            state.providers[p.name] = {
+                "status": "running",
+                "time": None,
+                "error": None
+            }
+        time.sleep(0.2)
 
     stats: Dict[str, Any] = {}
     winner_data: NormalizedWeatherData = None
@@ -66,6 +88,24 @@ def run_weather_race(
                 "error": error
             }
             
+            if state:
+                if res is not None:
+                    state.providers[p_name] = {
+                        "status": "completed",
+                        "time": elapsed,
+                        "error": None
+                    }
+                    if winner_data is None:
+                        state.last_log = f"🏆 {p_name} yarışı {elapsed:.1f}ms ile kazandı!"
+                else:
+                    state.providers[p_name] = {
+                        "status": "failed",
+                        "time": elapsed,
+                        "error": error
+                    }
+                    state.last_log = f"⚠ {p_name} başarısız oldu! Hata: {error[:30]}..."
+                time.sleep(0.1) # tiny sleep to allow the update to feel smooth
+            
             if res is not None and winner_data is None:
                 # First one wins! Record winner and return.
                 winner_data = res
@@ -76,10 +116,24 @@ def run_weather_race(
 
     # If we didn't find any successful result
     if winner_data is None:
+        if state:
+            state.step_race = "failed"
+            state.last_log = "❌ Tüm hava durumu sağlayıcıları başarısız oldu!"
         # Wait for all remaining futures to get a complete error log if needed,
         # but since as_completed ran through them, let's gather errors:
         errors = [f"{name}: {info['error']}" for name, info in stats.items() if info["error"]]
         error_msg = "All weather providers failed. Errors:\n" + "\n".join(errors)
         raise ConnectionError(error_msg)
+
+    if state:
+        state.step_race = "completed"
+        state.step_blending = "running"
+        state.global_progress = 85
+        state.last_log = "📊 Veriler harmanlanıyor ve rapor hazırlanıyor..."
+        time.sleep(0.2)
+        state.step_blending = "completed"
+        state.global_progress = 100
+        state.last_log = "🎉 Süreç başarıyla tamamlandı!"
+        time.sleep(0.15)
 
     return winner_data, stats, winner_name

@@ -81,69 +81,111 @@ def weather(location, from_date, to_date, all_hours, json_output, verbose):
     end_date = to_date or today_str
 
     try:
-        # 1. Geocoding Caching Log in Verbose Mode
-        if verbose:
-            from weather_cli.geocoding import CACHE_PATH, CACHE_TTL_SECONDS
-            query_key = location.lower().strip()
-            cache_hit = False
-            if os.path.exists(CACHE_PATH):
+        import sys
+        use_tui = not json_output and not verbose and sys.stdout.isatty()
+
+        resolved = None
+        weather_data = None
+        stats = None
+        winner_name = None
+
+        if use_tui:
+            from rich.live import Live
+            from weather_cli.tui import ProcessState, build_dashboard_layout
+            
+            state = ProcessState(location)
+            
+            with Live(build_dashboard_layout(state), refresh_per_second=10) as live:
                 try:
-                    with open(CACHE_PATH, "r", encoding="utf-8") as f:
-                        cache = json.load(f)
-                        if query_key in cache:
-                            entry = cache[query_key]
-                            if time.time() - entry.get("timestamp", 0) < CACHE_TTL_SECONDS:
-                                cache_hit = True
-                except Exception:
-                    pass
-            if cache_hit:
-                console.print(f"⚡ [bold green]Cache Hit:[/bold green] {location}")
-            else:
-                console.print(f"🔍 [bold yellow]Cache Miss:[/bold yellow] {location}")
+                    # Geocoding
+                    resolved = resolve_location(location, state=state)
+                    live.update(build_dashboard_layout(state))
+                    
+                    providers = [
+                        OpenMeteoProvider(),
+                        MetNorwayProvider(),
+                        WttrProvider(),
+                    ]
+                    
+                    # Parallel Race Execution
+                    weather_data, stats, winner_name = run_weather_race(
+                        providers=providers,
+                        lat=resolved["latitude"],
+                        lon=resolved["longitude"],
+                        start_date=start_date,
+                        end_date=end_date,
+                        state=state
+                    )
+                    live.update(build_dashboard_layout(state))
+                except Exception as e:
+                    state.last_log = f"❌ Hata: {str(e)}"
+                    live.update(build_dashboard_layout(state))
+                    time.sleep(1.5)
+                    raise e
+        else:
+            # 1. Geocoding Caching Log in Verbose Mode
+            if verbose:
+                from weather_cli.geocoding import CACHE_PATH, CACHE_TTL_SECONDS
+                query_key = location.lower().strip()
+                cache_hit = False
+                if os.path.exists(CACHE_PATH):
+                    try:
+                        with open(CACHE_PATH, "r", encoding="utf-8") as f:
+                            cache = json.load(f)
+                            if query_key in cache:
+                                entry = cache[query_key]
+                                if time.time() - entry.get("timestamp", 0) < CACHE_TTL_SECONDS:
+                                    cache_hit = True
+                    except Exception:
+                        pass
+                if cache_hit:
+                    console.print(f"⚡ [bold green]Cache Hit:[/bold green] {location}")
+                else:
+                    console.print(f"🔍 [bold yellow]Cache Miss:[/bold yellow] {location}")
 
-        resolved = resolve_location(location)
+            resolved = resolve_location(location)
 
-        # 2. Providers list setup
-        providers = [
-            OpenMeteoProvider(),
-            MetNorwayProvider(),
-            WttrProvider(),
-        ]
+            # 2. Providers list setup
+            providers = [
+                OpenMeteoProvider(),
+                MetNorwayProvider(),
+                WttrProvider(),
+            ]
 
-        # In verbose mode, check which providers are eligible for the race
-        today = date.today()
-        s_date = date.fromisoformat(start_date)
-        is_historical = s_date < today
-        eligible_provider_names = [
-            p.name for p in providers if not (is_historical and p.name == "MET Norway")
-        ]
+            # In verbose mode, check which providers are eligible for the race
+            today = date.today()
+            s_date = date.fromisoformat(start_date)
+            is_historical = s_date < today
+            eligible_provider_names = [
+                p.name for p in providers if not (is_historical and p.name == "MET Norway")
+            ]
 
-        if verbose:
-            console.print(
-                f"🚀 [bold blue]Starting parallel race for:[/bold blue] {', '.join(eligible_provider_names)}"
+            if verbose:
+                console.print(
+                    f"🚀 [bold blue]Starting parallel race for:[/bold blue] {', '.join(eligible_provider_names)}"
+                )
+
+            # 3. Parallel Race Execution
+            weather_data, stats, winner_name = run_weather_race(
+                providers=providers,
+                lat=resolved["latitude"],
+                lon=resolved["longitude"],
+                start_date=start_date,
+                end_date=end_date,
             )
 
-        # 3. Parallel Race Execution
-        weather_data, stats, winner_name = run_weather_race(
-            providers=providers,
-            lat=resolved["latitude"],
-            lon=resolved["longitude"],
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        # 4. Verbose race stats logging
-        if verbose:
-            console.print("\n🏁 [bold]Thread Details:[/bold]")
-            for p_name, p_stat in stats.items():
-                if p_stat["success"]:
-                    console.print(f"  - {p_name}: [green]SUCCESS[/green] ({p_stat['time_ms']:.1f}ms)")
-                else:
-                    console.print(
-                        f"  - {p_name}: [red]FAILED[/red] ({p_stat['time_ms']:.1f}ms) - {p_stat['error']}"
-                    )
-            winner_time = stats[winner_name]["time_ms"]
-            console.print(f"\n🏆 [bold gold1]Winner:[/bold gold1] [bold]{winner_name}[/bold] ({winner_time:.1f}ms)\n")
+            # 4. Verbose race stats logging
+            if verbose:
+                console.print("\n🏁 [bold]Thread Details:[/bold]")
+                for p_name, p_stat in stats.items():
+                    if p_stat["success"]:
+                        console.print(f"  - {p_name}: [green]SUCCESS[/green] ({p_stat['time_ms']:.1f}ms)")
+                    else:
+                        console.print(
+                            f"  - {p_name}: [red]FAILED[/red] ({p_stat['time_ms']:.1f}ms) - {p_stat['error']}"
+                        )
+                winner_time = stats[winner_name]["time_ms"]
+                console.print(f"\n🏆 [bold gold1]Winner:[/bold gold1] [bold]{winner_name}[/bold] ({winner_time:.1f}ms)\n")
 
         # 5. JSON Output Mode
         if json_output:

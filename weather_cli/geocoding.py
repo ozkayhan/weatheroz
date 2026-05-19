@@ -80,19 +80,53 @@ def _save_cache(cache: dict) -> None:
         pass
 
 
-def resolve_location(query: str) -> dict:
+def resolve_location(query: str, state=None) -> dict:
+    import time
     query_key = query.lower().strip()
+    
+    if state:
+        state.step_geocoding = "running"
+        state.global_progress = 10
+        state.last_log = f"'{query}' için önbellek sorgulanıyor..."
+        time.sleep(0.15)
+
     cache = _load_cache()
     
     if query_key in cache:
         entry = cache[query_key]
         cached_time = entry.get("timestamp", 0)
         if time.time() - cached_time < CACHE_TTL_SECONDS:
+            if state:
+                state.cache_status = "hit"
+                state.resolved_location = f"{entry['data']['name']}, {entry['data'].get('country', '')}"
+                state.last_log = f"⚡ Önbellek İsabeti (Cache Hit): '{query}' konum bilgisi yüklendi!"
+                state.global_progress = 40
+                time.sleep(0.15)
+                state.step_geocoding = "completed"
+                state.global_progress = 50
+                time.sleep(0.1)
             return entry["data"]
+
+    if state:
+        state.cache_status = "miss"
+        state.last_log = f"🔍 Önbellek Iskaladı (Cache Miss): '{query}' için Geocoding API çağrılıyor..."
+        state.global_progress = 25
+        time.sleep(0.15)
 
     candidates = _normalize_query(query)
     for candidate in candidates:
-        results = _fetch_geocoding(candidate)
+        if state:
+            state.last_log = f"📡 Geocoding API sorgulanıyor: '{candidate}'..."
+            time.sleep(0.1)
+        try:
+            results = _fetch_geocoding(candidate)
+        except Exception as e:
+            if state:
+                state.step_geocoding = "failed"
+                state.last_log = f"❌ Geocoding Hatası: {str(e)}"
+                time.sleep(0.15)
+            raise e
+            
         if results:
             best = results[0]
             resolved = {
@@ -110,7 +144,20 @@ def resolve_location(query: str) -> dict:
             }
             _save_cache(cache)
             
+            if state:
+                state.resolved_location = f"{resolved['name']}, {resolved.get('country', '')}"
+                state.last_log = f"✅ Konum çözümlendi: {state.resolved_location}"
+                state.global_progress = 45
+                time.sleep(0.15)
+                state.step_geocoding = "completed"
+                state.global_progress = 50
+                time.sleep(0.1)
+            
             return resolved
             
+    if state:
+        state.step_geocoding = "failed"
+        state.last_log = f"❌ Konum bulunamadı: '{query}'"
+        time.sleep(0.15)
     raise ValueError(f"Location not found: {query}")
 
