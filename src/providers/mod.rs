@@ -1,32 +1,32 @@
-pub mod models;
-pub mod base;
-pub mod openmeteo;
-pub mod metnorway;
-pub mod wttr;
-pub mod brightsky;
-pub mod smhi;
-pub mod fmi;
-pub mod nws;
-pub mod meteostat;
-pub mod envcanada;
-pub mod openweathermap;
-pub mod weatherapi;
-pub mod weatherbit;
-pub mod tomorrowio;
-pub mod visualcrossing;
-pub mod weatherstack;
-pub mod yandex;
 pub mod accuweather;
+pub mod base;
+pub mod brightsky;
+pub mod envcanada;
+pub mod fmi;
+pub mod meteostat;
+pub mod metnorway;
+pub mod models;
+pub mod nws;
+pub mod openmeteo;
+pub mod openweathermap;
 pub mod pirateweather;
 pub mod simulated;
+pub mod smhi;
+pub mod tomorrowio;
+pub mod visualcrossing;
+pub mod weatherapi;
+pub mod weatherbit;
+pub mod weatherstack;
+pub mod wttr;
+pub mod yandex;
 
+use crate::providers::base::{BaseWeatherProvider, FetchContext};
+use crate::providers::models::{AQIData, HourlyPoint, NormalizedWeatherData};
+use crate::tui::{conditional_sleep, ProviderState, SharedState};
+use chrono::NaiveDate;
+use futures_util::stream::{FuturesUnordered, StreamExt};
 use std::collections::HashMap;
 use std::time::Instant;
-use futures_util::stream::{FuturesUnordered, StreamExt};
-use chrono::NaiveDate;
-use crate::tui::{SharedState, ProviderState, conditional_sleep};
-use crate::providers::base::{BaseWeatherProvider, FetchContext};
-use crate::providers::models::{NormalizedWeatherData, HourlyPoint, AQIData};
 
 #[derive(Clone)]
 pub enum WeatherProvider {
@@ -247,7 +247,10 @@ fn blend_weather_data(
     let mut time_map = std::collections::BTreeMap::new();
     for (_, data, _) in &successful {
         for pt in &data.hourly {
-            time_map.entry(pt.time.clone()).or_insert_with(Vec::new).push(pt);
+            time_map
+                .entry(pt.time.clone())
+                .or_insert_with(Vec::new)
+                .push(pt);
         }
     }
 
@@ -260,7 +263,8 @@ fn blend_weather_data(
 
         let temperature = pts.iter().map(|p| p.temperature).sum::<f64>() / count;
         let apparent_temperature = pts.iter().map(|p| p.apparent_temperature).sum::<f64>() / count;
-        let precipitation_probability = pts.iter().map(|p| p.precipitation_probability).sum::<f64>() / count;
+        let precipitation_probability =
+            pts.iter().map(|p| p.precipitation_probability).sum::<f64>() / count;
         let precipitation = pts.iter().map(|p| p.precipitation).sum::<f64>() / count;
         let humidity = pts.iter().map(|p| p.humidity).sum::<f64>() / count;
         let wind_speed = pts.iter().map(|p| p.wind_speed).sum::<f64>() / count;
@@ -376,7 +380,10 @@ pub async fn run_weather_race(
     race_list: &[String],
     fallback_list: &[String],
     state: Option<&SharedState>,
-) -> Result<(NormalizedWeatherData, HashMap<String, ProviderStat>, String), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<
+    (NormalizedWeatherData, HashMap<String, ProviderStat>, String),
+    Box<dyn std::error::Error + Send + Sync>,
+> {
     let today = chrono::Utc::now().naive_utc().date();
     let s = NaiveDate::parse_from_str(ctx.start_date, "%Y-%m-%d")?;
 
@@ -390,11 +397,14 @@ pub async fn run_weather_race(
             if is_historical && p.name() == "MET Norway" {
                 if let Some(s_state) = state {
                     let mut guard = s_state.lock().unwrap();
-                    guard.providers.insert("MET Norway".to_string(), ProviderState {
-                        status: "failed".to_string(),
-                        time: None,
-                        error: Some("Excluded for historical query".to_string()),
-                    });
+                    guard.providers.insert(
+                        "MET Norway".to_string(),
+                        ProviderState {
+                            status: "failed".to_string(),
+                            time: None,
+                            error: Some("Excluded for historical query".to_string()),
+                        },
+                    );
                 }
                 continue;
             }
@@ -404,11 +414,14 @@ pub async fn run_weather_race(
                 if !ctx.api_keys.contains_key(key_name) {
                     if let Some(s_state) = state {
                         let mut guard = s_state.lock().unwrap();
-                        guard.providers.insert(p.name().to_string(), ProviderState {
-                            status: "failed".to_string(),
-                            time: None,
-                            error: Some(format!("Missing API key '{}'", key_name)),
-                        });
+                        guard.providers.insert(
+                            p.name().to_string(),
+                            ProviderState {
+                                status: "failed".to_string(),
+                                time: None,
+                                error: Some(format!("Missing API key '{}'", key_name)),
+                            },
+                        );
                     }
                     continue;
                 }
@@ -426,11 +439,14 @@ pub async fn run_weather_race(
             guard.step_race = "running".to_string();
             guard.global_progress = 60;
             for p in &eligible {
-                guard.providers.insert(p.name().to_string(), ProviderState {
-                    status: "running".to_string(),
-                    time: None,
-                    error: None,
-                });
+                guard.providers.insert(
+                    p.name().to_string(),
+                    ProviderState {
+                        status: "running".to_string(),
+                        time: None,
+                        error: None,
+                    },
+                );
             }
         }
 
@@ -549,9 +565,15 @@ pub async fn run_weather_race(
 
     for p in &providers {
         let name = p.name();
-        if race_list.iter().any(|r| r.to_lowercase() == name.to_lowercase()) {
+        if race_list
+            .iter()
+            .any(|r| r.to_lowercase() == name.to_lowercase())
+        {
             main_providers.push(p.clone());
-        } else if fallback_list.iter().any(|f| f.to_lowercase() == name.to_lowercase()) {
+        } else if fallback_list
+            .iter()
+            .any(|f| f.to_lowercase() == name.to_lowercase())
+        {
             fallback_providers.push(p.clone());
         }
     }
@@ -575,7 +597,11 @@ pub async fn run_weather_race(
         Err(e) => {
             tracing::warn!("❌ Primary weather race failed: {}", e);
             if fallback_providers.is_empty() {
-                return Err(format!("Primary race failed, and no fallback providers are configured. Error: {}", e).into());
+                return Err(format!(
+                    "Primary race failed, and no fallback providers are configured. Error: {}",
+                    e
+                )
+                .into());
             }
 
             tracing::info!("🛡 Primary race failed. Initiating fallback weather race group...");
@@ -603,8 +629,8 @@ pub async fn run_weather_race(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::mock::MockProvider;
+    use super::*;
     use std::sync::Arc;
 
     #[tokio::test]
@@ -648,7 +674,9 @@ mod tests {
             &["Mock-Slow-1".to_string(), "Mock-Fast-2".to_string()],
             &[],
             None,
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
 
         assert_eq!(winner_name, "Mock-Fast-2");
         assert_eq!(weather_data.provider_name, "Mock-Fast-2");

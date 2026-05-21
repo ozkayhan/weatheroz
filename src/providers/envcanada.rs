@@ -19,7 +19,9 @@ impl BaseWeatherProvider for EnvCanadaProvider {
         let today = chrono::Utc::now().naive_utc().date();
 
         for d in 0..ctx.days {
-            let current_date = (today + chrono::Duration::days(d as i64)).format("%Y-%m-%d").to_string();
+            let current_date = (today + chrono::Duration::days(d as i64))
+                .format("%Y-%m-%d")
+                .to_string();
             if current_date.as_str() < ctx.start_date || current_date.as_str() > ctx.end_date {
                 continue;
             }

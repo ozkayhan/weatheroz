@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct OpenWeatherMapProvider;
@@ -58,7 +58,9 @@ impl BaseWeatherProvider for OpenWeatherMapProvider {
         if let Some(list) = raw.list {
             for item in list {
                 let dt = item.dt.unwrap_or(0);
-                let naive = chrono::DateTime::from_timestamp(dt, 0).map(|dt_utc| dt_utc.naive_utc()).unwrap_or_default();
+                let naive = chrono::DateTime::from_timestamp(dt, 0)
+                    .map(|dt_utc| dt_utc.naive_utc())
+                    .unwrap_or_default();
                 let time_str = naive.format("%Y-%m-%dT%H:%M:%S").to_string();
                 let date_part = time_str.split('T').next().unwrap_or("");
                 if date_part < ctx.start_date || date_part > ctx.end_date {
@@ -66,7 +68,10 @@ impl BaseWeatherProvider for OpenWeatherMapProvider {
                 }
 
                 let temp = item.main.and_then(|m| m.temp).unwrap_or(0.0);
-                let code = item.weather.and_then(|w| w.first().and_then(|x| x.id)).unwrap_or(800);
+                let code = item
+                    .weather
+                    .and_then(|w| w.first().and_then(|x| x.id))
+                    .unwrap_or(800);
 
                 // Map OWM codes (2xx, 3xx, 5xx, 6xx, 7xx, 8xx) to WMO codes
                 let wmo = match code {

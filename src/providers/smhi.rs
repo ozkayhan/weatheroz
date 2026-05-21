@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct SmhiProvider;
@@ -71,24 +71,24 @@ impl BaseWeatherProvider for SmhiProvider {
                         continue;
                     }
                     match param.name.as_str() {
-                        "t" => temp = param.values[0], // Temperature Celsius
-                        "r" => hum = param.values[0],  // Relative Humidity %
-                        "ws" => wind_sp = param.values[0] * 3.6, // wind speed m/s to km/h
-                        "wd" => wind_dir = param.values[0], // wind direction degree
+                        "t" => temp = param.values[0],                // Temperature Celsius
+                        "r" => hum = param.values[0],                 // Relative Humidity %
+                        "ws" => wind_sp = param.values[0] * 3.6,      // wind speed m/s to km/h
+                        "wd" => wind_dir = param.values[0],           // wind direction degree
                         "tcc_mean" => cloud = param.values[0] * 12.5, // octas to % (approx)
-                        "pmean" => precip = param.values[0], // precipitation mean mm/h
-                        "Wsymb2" => wmo = param.values[0] as i32, // Weather symbol (1-27)
+                        "pmean" => precip = param.values[0],          // precipitation mean mm/h
+                        "Wsymb2" => wmo = param.values[0] as i32,     // Weather symbol (1-27)
                         _ => {}
                     }
                 }
 
                 // Map SMHI symbols (1-27) to WMO codes roughly
                 let wmo_mapped = match wmo {
-                    1..=2 => 0,  // Clear
-                    3..=4 => 2,  // Partly cloudy
-                    5..=6 => 3,  // Cloudy
-                    7 => 45,     // Fog
-                    8..=10 => 51, // Light rain
+                    1..=2 => 0,    // Clear
+                    3..=4 => 2,    // Partly cloudy
+                    5..=6 => 3,    // Cloudy
+                    7 => 45,       // Fog
+                    8..=10 => 51,  // Light rain
                     18..=20 => 61, // Rain
                     21..=24 => 71, // Snow
                     _ => 0,

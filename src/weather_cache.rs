@@ -1,10 +1,10 @@
+use crate::providers::models::NormalizedWeatherData;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::OnceLock;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use crate::providers::models::NormalizedWeatherData;
 
 const WEATHER_CACHE_TTL_SECONDS: f64 = 15.0 * 60.0; // default 15 minutes
 
@@ -58,7 +58,8 @@ async fn save_weather_cache_async(cache: &HashMap<String, WeatherCacheEntry>) {
 }
 
 static WEATHER_CACHE: OnceLock<RwLock<HashMap<String, WeatherCacheEntry>>> = OnceLock::new();
-static WEATHER_CACHE_LOADED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static WEATHER_CACHE_LOADED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
 
 static LAST_WEATHER_CACHE_PATH: OnceLock<std::sync::Mutex<PathBuf>> = OnceLock::new();
 
@@ -86,7 +87,13 @@ async fn get_weather_cache() -> &'static RwLock<HashMap<String, WeatherCacheEntr
 }
 
 fn make_cache_key(lat: f64, lon: f64, start_date: &str, end_date: &str) -> String {
-    format!("{:.4}:{:.4}:{}:{}", lat, lon, start_date.trim(), end_date.trim())
+    format!(
+        "{:.4}:{:.4}:{}:{}",
+        lat,
+        lon,
+        start_date.trim(),
+        end_date.trim()
+    )
 }
 
 /// Retrieves a weather cache entry.

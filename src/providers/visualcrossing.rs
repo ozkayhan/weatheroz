@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct VisualCrossingProvider;

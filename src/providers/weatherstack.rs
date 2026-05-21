@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct WeatherStackProvider;
@@ -74,7 +74,8 @@ impl BaseWeatherProvider for WeatherStackProvider {
 
             // Since WeatherStack only gives current weather, we map it to 24 hours of the start date
             let today = chrono::Utc::now().naive_utc().date();
-            let start = chrono::NaiveDate::parse_from_str(ctx.start_date, "%Y-%m-%d").unwrap_or(today);
+            let start =
+                chrono::NaiveDate::parse_from_str(ctx.start_date, "%Y-%m-%d").unwrap_or(today);
             for h in 0..24 {
                 points.push(HourlyPoint {
                     time: format!("{}T{:02}:00:00", start.format("%Y-%m-%d"), h),

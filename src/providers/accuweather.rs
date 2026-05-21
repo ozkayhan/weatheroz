@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct AccuWeatherProvider;
@@ -70,7 +70,9 @@ impl BaseWeatherProvider for AccuWeatherProvider {
         }
 
         let loc_data: AccuLocationResponse = loc_resp.json().await?;
-        let loc_key = loc_data.Key.ok_or("Failed to retrieve AccuWeather Location Key")?;
+        let loc_key = loc_data
+            .Key
+            .ok_or("Failed to retrieve AccuWeather Location Key")?;
 
         // Fetch 12 Hours forecast
         let forecast_url = format!(
@@ -80,35 +82,54 @@ impl BaseWeatherProvider for AccuWeatherProvider {
 
         let forecast_resp = ctx.client.get(&forecast_url).send().await?;
         if !forecast_resp.status().is_success() {
-            return Err(format!("AccuWeather Forecast HTTP error {}", forecast_resp.status()).into());
+            return Err(
+                format!("AccuWeather Forecast HTTP error {}", forecast_resp.status()).into(),
+            );
         }
 
         let raw: Vec<AccuHourlyItem> = forecast_resp.json().await?;
         let mut points = Vec::new();
 
         for item in raw {
-            let time_formatted = item.DateTime.replace('Z', "").split('+').next().unwrap_or("").to_string();
+            let time_formatted = item
+                .DateTime
+                .replace('Z', "")
+                .split('+')
+                .next()
+                .unwrap_or("")
+                .to_string();
             let date_part = time_formatted.split('T').next().unwrap_or("");
             if date_part < ctx.start_date || date_part > ctx.end_date {
                 continue;
             }
 
             let temp = item.Temperature.and_then(|t| t.Value).unwrap_or(0.0);
-            let feels = item.RealFeelTemperature.and_then(|t| t.Value).unwrap_or(temp);
+            let feels = item
+                .RealFeelTemperature
+                .and_then(|t| t.Value)
+                .unwrap_or(temp);
             let icon = item.WeatherIcon.unwrap_or(1);
 
             // Map AccuWeather Icon IDs to WMO
             let wmo = match icon {
-                1..=5 => 0,     // Clear/Sunny
-                6..=10 => 2,    // Clouds
-                11 => 45,       // Fog
-                12..=18 => 63,  // Rain
-                19..=29 => 73,  // Snow
+                1..=5 => 0,    // Clear/Sunny
+                6..=10 => 2,   // Clouds
+                11 => 45,      // Fog
+                12..=18 => 63, // Rain
+                19..=29 => 73, // Snow
                 _ => 0,
             };
 
-            let wind_spd = item.Wind.as_ref().and_then(|w| w.Speed.as_ref().and_then(|s| s.Value)).unwrap_or(0.0);
-            let wind_dir = item.Wind.as_ref().and_then(|w| w.Direction.as_ref().and_then(|d| d.Degrees)).unwrap_or(0.0);
+            let wind_spd = item
+                .Wind
+                .as_ref()
+                .and_then(|w| w.Speed.as_ref().and_then(|s| s.Value))
+                .unwrap_or(0.0);
+            let wind_dir = item
+                .Wind
+                .as_ref()
+                .and_then(|w| w.Direction.as_ref().and_then(|d| d.Degrees))
+                .unwrap_or(0.0);
             let vis = item.Visibility.and_then(|v| v.Value);
 
             points.push(HourlyPoint {

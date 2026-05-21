@@ -1,5 +1,5 @@
-pub mod models;
-pub mod location;
 pub mod cache;
-pub mod provider;
 pub mod config;
+pub mod location;
+pub mod models;
+pub mod provider;

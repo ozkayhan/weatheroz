@@ -1,5 +1,5 @@
-use clap::Parser;
 use clap::builder::styling::{AnsiColor, Styles};
+use clap::Parser;
 
 // Custom color palette for the Clap CLI help output
 pub fn get_styles() -> Styles {
@@ -99,4 +99,3 @@ pub fn validate_date(date_str: &str) -> Result<(), String> {
     }
     Ok(())
 }
-

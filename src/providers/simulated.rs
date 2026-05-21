@@ -17,7 +17,11 @@ macro_rules! define_simulated_provider {
             ) -> Result<NormalizedWeatherData, Box<dyn std::error::Error + Send + Sync>> {
                 // If they configure a key, check for it. Otherwise, if not racing, we might require it.
                 // In simulated mode, we just retrieve the key or fallback to a default mock key.
-                let _key = ctx.api_keys.get($key_name).cloned().unwrap_or_else(|| "mock-key".to_string());
+                let _key = ctx
+                    .api_keys
+                    .get($key_name)
+                    .cloned()
+                    .unwrap_or_else(|| "mock-key".to_string());
 
                 let mut points = Vec::new();
                 let today = chrono::Utc::now().naive_utc().date();
@@ -28,8 +32,12 @@ macro_rules! define_simulated_provider {
                 let base_temp = 16.0 + (lat_factor + lon_factor) as f64;
 
                 for d in 0..ctx.days {
-                    let current_date = (today + chrono::Duration::days(d as i64)).format("%Y-%m-%d").to_string();
-                    if current_date.as_str() < ctx.start_date || current_date.as_str() > ctx.end_date {
+                    let current_date = (today + chrono::Duration::days(d as i64))
+                        .format("%Y-%m-%d")
+                        .to_string();
+                    if current_date.as_str() < ctx.start_date
+                        || current_date.as_str() > ctx.end_date
+                    {
                         continue;
                     }
                     for h in 0..24 {
@@ -47,7 +55,7 @@ macro_rules! define_simulated_provider {
                             weather_code: 1, // Partly cloudy
                             aqi: None,
                             uv_index: Some(5.0),
-                            is_day: Some(h >= 6 && h <= 19),
+                            is_day: Some((6..=19).contains(&h)),
                             visibility: Some(10.0),
                             soil_temperature: Some(15.0),
                             soil_moisture: Some(0.35),

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 use weather_oz::providers::base::FetchContext;
-use weather_oz::providers::{run_weather_race, WeatherProvider};
 use weather_oz::providers::mock::MockProvider;
+use weather_oz::providers::{run_weather_race, WeatherProvider};
 
 #[tokio::test]
 async fn test_short_circuit_performance() {
@@ -52,10 +52,16 @@ async fn test_short_circuit_performance() {
         &["Mock-Fast-V2".to_string(), "Mock-Slow-V2".to_string()],
         &[],
         None,
-    ).await.unwrap();
+    )
+    .await
+    .unwrap();
     let elapsed = start.elapsed();
 
-    println!("Short-circuit race completed in {} ms. Winner: {}", elapsed.as_millis(), winner_name);
+    println!(
+        "Short-circuit race completed in {} ms. Winner: {}",
+        elapsed.as_millis(),
+        winner_name
+    );
 
     // Old implementation takes > 1000ms because it waits for the slow mock provider.
     // New V2 short-circuiting should complete in less than 300ms!
@@ -74,7 +80,7 @@ async fn test_short_circuit_performance() {
 async fn test_consensus_blending_correctness() {
     // HYPOTHESIS 2: Under the old logic, we simply take the absolute fastest provider's results.
     // In V2, we introduce "Smart Blending & Consensus" where we wait for a tiny "consensus window"
-    // (e.g. 100ms grace period after the first successful response) and blend the weather data 
+    // (e.g. 100ms grace period after the first successful response) and blend the weather data
     // of all successful providers that returned in that window, creating a highly accurate combined forecast.
     //
     // Mock-1: finishes at 40ms, temperature = 20.0
@@ -133,13 +139,24 @@ async fn test_consensus_blending_correctness() {
     let (weather_data, stats, winner_name) = run_weather_race(
         &ctx,
         providers,
-        &["Mock-1".to_string(), "Mock-2".to_string(), "Mock-3".to_string(), "Mock-Slow".to_string()],
+        &[
+            "Mock-1".to_string(),
+            "Mock-2".to_string(),
+            "Mock-3".to_string(),
+            "Mock-Slow".to_string(),
+        ],
         &[],
         None,
-    ).await.unwrap();
+    )
+    .await
+    .unwrap();
     let elapsed = start.elapsed();
 
-    println!("Blending race completed in {} ms. Winner name: {}", elapsed.as_millis(), winner_name);
+    println!(
+        "Blending race completed in {} ms. Winner name: {}",
+        elapsed.as_millis(),
+        winner_name
+    );
 
     // Speed check: Consensus window starts at 40ms and ends at 40 + 100 = 140ms.
     // It should complete in less than 300ms, not waiting for the 1000ms slow provider.
@@ -157,7 +174,10 @@ async fn test_consensus_blending_correctness() {
     );
 
     // Weather data should have blended temperature: 21.0 Celsius!
-    assert!(!weather_data.hourly.is_empty(), "Hourly weather points are empty");
+    assert!(
+        !weather_data.hourly.is_empty(),
+        "Hourly weather points are empty"
+    );
     let temp = weather_data.hourly[0].temperature;
     assert!(
         (temp - 21.0).abs() < 0.01,
@@ -218,7 +238,9 @@ async fn test_resilience_missing_keys() {
         &["Mock-Fail-V2".to_string(), "Mock-Success-V2".to_string()],
         &[],
         None,
-    ).await.unwrap();
+    )
+    .await
+    .unwrap();
 
     // The race should succeed by falling back to Mock-Success-V2, even though Mock-Fail-V2 failed first.
     assert!(winner_name.contains("Success") || winner_name.contains("Blended"));

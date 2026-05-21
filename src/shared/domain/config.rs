@@ -1,7 +1,7 @@
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -39,11 +39,20 @@ impl Default for AppConfig {
 #[async_trait]
 pub trait ConfigService: Send + Sync {
     async fn load_config(&self) -> Result<AppConfig, Box<dyn std::error::Error + Send + Sync>>;
-    async fn save_config(&self, config: &AppConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    async fn save_config(
+        &self,
+        config: &AppConfig,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
 
 pub struct JsonConfigService {
     config_path: PathBuf,
+}
+
+impl Default for JsonConfigService {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl JsonConfigService {
@@ -116,7 +125,10 @@ impl ConfigService for JsonConfigService {
         Ok(config)
     }
 
-    async fn save_config(&self, config: &AppConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn save_config(
+        &self,
+        config: &AppConfig,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(parent) = self.config_path.parent() {
             tokio::fs::create_dir_all(parent).await?;
         }

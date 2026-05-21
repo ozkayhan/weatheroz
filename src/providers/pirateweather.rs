@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct PirateWeatherProvider;
@@ -83,7 +83,9 @@ impl BaseWeatherProvider for PirateWeatherProvider {
             if let Some(data) = hourly.data {
                 for item in data {
                     let ts = item.time.unwrap_or(0);
-                    let naive = chrono::DateTime::from_timestamp(ts, 0).map(|dt_utc| dt_utc.naive_utc()).unwrap_or_default();
+                    let naive = chrono::DateTime::from_timestamp(ts, 0)
+                        .map(|dt_utc| dt_utc.naive_utc())
+                        .unwrap_or_default();
                     let time_formatted = naive.format("%Y-%m-%dT%H:%M:%S").to_string();
                     let date_part = time_formatted.split('T').next().unwrap_or("");
                     if date_part < ctx.start_date || date_part > ctx.end_date {

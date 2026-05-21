@@ -1,16 +1,16 @@
+use crate::tui::{conditional_sleep, SharedState};
+use deunicode::deunicode;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH};
 use std::sync::{Arc, OnceLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use deunicode::deunicode;
-use crate::tui::{SharedState, conditional_sleep};
 
 const CACHE_TTL_SECONDS: f64 = 30.0 * 24.0 * 60.0 * 60.0;
 
 const PREFIXES_TO_STRIP: &[&str] = &[
-    "eski", "yeni", "new", "old", "upper", "lower", "north", "south", "east", "west"
+    "eski", "yeni", "new", "old", "upper", "lower", "north", "south", "east", "west",
 ];
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -96,12 +96,10 @@ async fn get_geo_cache() -> &'static RwLock<HashMap<String, CacheEntry>> {
 pub fn normalize_query(query: &str) -> Vec<String> {
     let mut candidates = Vec::new();
     let words: Vec<&str> = query.split_whitespace().collect();
-    if !words.is_empty() {
-        if PREFIXES_TO_STRIP.contains(&words[0].to_lowercase().as_str()) {
-            let stripped = words[1..].join(" ");
-            if !stripped.is_empty() {
-                candidates.push(stripped);
-            }
+    if !words.is_empty() && PREFIXES_TO_STRIP.contains(&words[0].to_lowercase().as_str()) {
+        let stripped = words[1..].join(" ");
+        if !stripped.is_empty() {
+            candidates.push(stripped);
         }
     }
     candidates.push(query.to_string());
@@ -156,7 +154,10 @@ struct GeocodingApiResult {
     admin1: Option<String>,
 }
 
-async fn fetch_geocoding(client: Arc<reqwest::Client>, query: &str) -> Result<Vec<GeocodingApiResult>, Box<dyn std::error::Error + Send + Sync>> {
+async fn fetch_geocoding(
+    client: Arc<reqwest::Client>,
+    query: &str,
+) -> Result<Vec<GeocodingApiResult>, Box<dyn std::error::Error + Send + Sync>> {
     let url = format!(
         "https://geocoding-api.open-meteo.com/v1/search?name={}&count=5&language=en&format=json",
         urlencoding::encode(query)
@@ -181,7 +182,7 @@ pub async fn resolve_location(
         guard.step_geocoding = "running".to_string();
         guard.global_progress = 10;
     }
-    tracing::info!("'{}' için önbellek sorgulanıyor...", query);
+    tracing::info!("Querying cache for '{}'...", query);
     conditional_sleep(state, 150).await;
 
     let now_secs = SystemTime::now()
@@ -197,10 +198,11 @@ pub async fn resolve_location(
                 if let Some(s) = state {
                     let mut guard = s.lock().unwrap();
                     guard.cache_status = "hit".to_string();
-                    guard.resolved_location = Some(format!("{}, {}", entry.data.name, entry.data.country));
+                    guard.resolved_location =
+                        Some(format!("{}, {}", entry.data.name, entry.data.country));
                     guard.global_progress = 40;
                 }
-                tracing::info!("⚡ Önbellek İsabeti (Cache Hit): '{}' konum bilgisi yüklendi!", query);
+                tracing::info!("⚡ Cache Hit: '{}' loaded!", query);
                 conditional_sleep(state, 150).await;
                 if let Some(s) = state {
                     let mut guard = s.lock().unwrap();
@@ -228,10 +230,11 @@ pub async fn resolve_location(
                 if let Some(s) = state {
                     let mut guard = s.lock().unwrap();
                     guard.cache_status = "hit".to_string();
-                    guard.resolved_location = Some(format!("{}, {}", entry.data.name, entry.data.country));
+                    guard.resolved_location =
+                        Some(format!("{}, {}", entry.data.name, entry.data.country));
                     guard.global_progress = 40;
                 }
-                tracing::info!("⚡ Önbellek İsabeti (Cache Hit): '{}' konum bilgisi yüklendi!", query);
+                tracing::info!("⚡ Cache Hit: '{}' loaded!", query);
                 conditional_sleep(state, 150).await;
                 if let Some(s) = state {
                     let mut guard = s.lock().unwrap();
@@ -249,12 +252,12 @@ pub async fn resolve_location(
         guard.cache_status = "miss".to_string();
         guard.global_progress = 25;
     }
-    tracing::info!("🔍 Önbellek Iskaladı (Cache Miss): '{}' için Geocoding API çağrılıyor...", query);
+    tracing::info!("🔍 Cache Miss: Querying Geocoding API for '{}'...", query);
     conditional_sleep(state, 150).await;
 
     let candidates = normalize_query(query);
     for candidate in candidates {
-        tracing::info!("📡 Geocoding API sorgulanıyor: '{}'...", candidate);
+        tracing::info!("📡 Querying Geocoding API for '{}'...", candidate);
         conditional_sleep(state, 100).await;
 
         match fetch_geocoding(client.clone(), &candidate).await {
@@ -286,10 +289,15 @@ pub async fn resolve_location(
 
                     if let Some(s) = state {
                         let mut guard = s.lock().unwrap();
-                        guard.resolved_location = Some(format!("{}, {}", resolved.name, resolved.country));
+                        guard.resolved_location =
+                            Some(format!("{}, {}", resolved.name, resolved.country));
                         guard.global_progress = 45;
                     }
-                    tracing::info!("✅ Konum çözümlendi: {}, {}", resolved.name, resolved.country);
+                    tracing::info!(
+                        "✅ Location resolved: {}, {}",
+                        resolved.name,
+                        resolved.country
+                    );
                     conditional_sleep(state, 150).await;
 
                     if let Some(s) = state {
@@ -307,7 +315,7 @@ pub async fn resolve_location(
                     let mut guard = s.lock().unwrap();
                     guard.step_geocoding = "failed".to_string();
                 }
-                tracing::error!("❌ Geocoding Hatası: {}", e);
+                tracing::error!("❌ Geocoding Error: {}", e);
                 conditional_sleep(state, 150).await;
                 return Err(e);
             }
@@ -318,7 +326,7 @@ pub async fn resolve_location(
         let mut guard = s.lock().unwrap();
         guard.step_geocoding = "failed".to_string();
     }
-    tracing::error!("❌ Konum bulunamadı: '{}'", query);
+    tracing::error!("❌ Location not found: '{}'", query);
     conditional_sleep(state, 150).await;
     Err(format!("Location not found: {}", query).into())
 }
@@ -346,7 +354,7 @@ pub async fn resolve_ip_location(
         guard.step_geocoding = "running".to_string();
         guard.global_progress = 10;
     }
-    tracing::info!("📡 IP adresi üzerinden konum tespit ediliyor...");
+    tracing::info!("📡 Detecting location via IP address...");
 
     let resp = client.get(url).send().await?;
     if !resp.status().is_success() {
@@ -362,7 +370,10 @@ pub async fn resolve_ip_location(
     let lon = parsed.lon.ok_or("Missing longitude in IP API response")?;
 
     let resolved = GeocodedLocation {
-        name: parsed.city.clone().unwrap_or_else(|| "Unknown City".to_string()),
+        name: parsed
+            .city
+            .clone()
+            .unwrap_or_else(|| "Unknown City".to_string()),
         latitude: (lat * 10000.0).round() / 10000.0,
         longitude: (lon * 10000.0).round() / 10000.0,
         country: parsed.country.clone().unwrap_or_default(),
@@ -375,7 +386,11 @@ pub async fn resolve_ip_location(
         guard.global_progress = 45;
         guard.step_geocoding = "completed".to_string();
     }
-    tracing::info!("✅ IP Konumu çözümlendi: {}, {}", resolved.name, resolved.country);
+    tracing::info!(
+        "✅ IP Location resolved: {}, {}",
+        resolved.name,
+        resolved.country
+    );
 
     Ok(resolved)
 }

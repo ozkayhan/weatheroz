@@ -1,32 +1,32 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-use chrono::{NaiveDate, Utc};
 use crate::cli::Args;
-use crate::geocoding::{GeocodedLocation, resolve_location};
-use crate::providers::{run_weather_race, WeatherProvider, ProviderStat};
-use crate::providers::base::FetchContext;
-use crate::providers::openmeteo::OpenMeteoProvider;
-use crate::providers::metnorway::MetNorwayProvider;
-use crate::providers::wttr::WttrProvider;
-use crate::providers::brightsky::BrightSkyProvider;
-use crate::providers::smhi::SmhiProvider;
-use crate::providers::fmi::FmiProvider;
-use crate::providers::nws::NwsProvider;
-use crate::providers::meteostat::MeteostatProvider;
-use crate::providers::envcanada::EnvCanadaProvider;
-use crate::providers::openweathermap::OpenWeatherMapProvider;
-use crate::providers::weatherapi::WeatherApiProvider;
-use crate::providers::weatherbit::WeatherbitProvider;
-use crate::providers::tomorrowio::TomorrowIoProvider;
-use crate::providers::visualcrossing::VisualCrossingProvider;
-use crate::providers::weatherstack::WeatherStackProvider;
-use crate::providers::yandex::YandexProvider;
+use crate::geocoding::{resolve_location, GeocodedLocation};
 use crate::providers::accuweather::AccuWeatherProvider;
+use crate::providers::base::FetchContext;
+use crate::providers::brightsky::BrightSkyProvider;
+use crate::providers::envcanada::EnvCanadaProvider;
+use crate::providers::fmi::FmiProvider;
+use crate::providers::meteostat::MeteostatProvider;
+use crate::providers::metnorway::MetNorwayProvider;
+use crate::providers::models::NormalizedWeatherData;
+use crate::providers::nws::NwsProvider;
+use crate::providers::openmeteo::OpenMeteoProvider;
+use crate::providers::openweathermap::OpenWeatherMapProvider;
 use crate::providers::pirateweather::PirateWeatherProvider;
 use crate::providers::simulated;
+use crate::providers::smhi::SmhiProvider;
+use crate::providers::tomorrowio::TomorrowIoProvider;
+use crate::providers::visualcrossing::VisualCrossingProvider;
+use crate::providers::weatherapi::WeatherApiProvider;
+use crate::providers::weatherbit::WeatherbitProvider;
+use crate::providers::weatherstack::WeatherStackProvider;
+use crate::providers::wttr::WttrProvider;
+use crate::providers::yandex::YandexProvider;
+use crate::providers::{run_weather_race, ProviderStat, WeatherProvider};
 use crate::tui::SharedState;
 use crate::weather_cache::{get_cached_weather, save_cached_weather};
-use crate::providers::models::NormalizedWeatherData;
+use chrono::{NaiveDate, Utc};
+use std::collections::HashMap;
+use std::sync::Arc;
 
 pub struct OrchestratorResult {
     pub resolved_location: GeocodedLocation,
@@ -53,7 +53,8 @@ pub async fn run_orchestrator(
     let end_date = if let Some(to_date) = &args.to_date {
         to_date.clone()
     } else if args.days.is_some() || config.forecast_days.is_some() || args.from_date.is_none() {
-        let s_date = NaiveDate::parse_from_str(&start_date, "%Y-%m-%d").unwrap_or_else(|_| Utc::now().naive_utc().date());
+        let s_date = NaiveDate::parse_from_str(&start_date, "%Y-%m-%d")
+            .unwrap_or_else(|_| Utc::now().naive_utc().date());
         let computed = s_date + chrono::Duration::days(days_count as i64 - 1);
         computed.format("%Y-%m-%d").to_string()
     } else {
@@ -82,15 +83,20 @@ pub async fn run_orchestrator(
     let ttl_seconds = (ttl_minutes as f64) * 60.0;
 
     if ttl_minutes > 0 {
-        match get_cached_weather(resolved.latitude, resolved.longitude, &start_date, &end_date, Some(ttl_seconds)).await {
-            Some((data, is_fresh, timestamp)) => {
-                if is_fresh {
-                    cache_hit_data = Some(data);
-                } else {
-                    offline_data = Some((data, timestamp));
-                }
+        if let Some((data, is_fresh, timestamp)) = get_cached_weather(
+            resolved.latitude,
+            resolved.longitude,
+            &start_date,
+            &end_date,
+            Some(ttl_seconds),
+        )
+        .await
+        {
+            if is_fresh {
+                cache_hit_data = Some(data);
+            } else {
+                offline_data = Some((data, timestamp));
             }
-            None => {}
         }
     }
 
@@ -109,11 +115,14 @@ pub async fn run_orchestrator(
         tracing::info!("⚡ Cache Hit: Loaded fresh weather data from local cache.");
 
         let mut stats = HashMap::new();
-        stats.insert("Cache".to_string(), ProviderStat {
-            time_ms: 0.0,
-            success: true,
-            error: None,
-        });
+        stats.insert(
+            "Cache".to_string(),
+            ProviderStat {
+                time_ms: 0.0,
+                success: true,
+                error: None,
+            },
+        );
 
         return Ok(OrchestratorResult {
             resolved_location: resolved,
@@ -180,17 +189,21 @@ pub async fn run_orchestrator(
     let default_fallback = vec!["Bright Sky".to_string()];
 
     let race_list = config.race_providers.as_ref().unwrap_or(&default_race);
-    let fallback_list = config.fallback_providers.as_ref().unwrap_or(&default_fallback);
+    let fallback_list = config
+        .fallback_providers
+        .as_ref()
+        .unwrap_or(&default_fallback);
 
-    match run_weather_race(
-        &ctx,
-        providers,
-        race_list,
-        fallback_list,
-        state,
-    ).await {
+    match run_weather_race(&ctx, providers, race_list, fallback_list, state).await {
         Ok((weather_data, stats, winner)) => {
-            save_cached_weather(resolved.latitude, resolved.longitude, &start_date, &end_date, &weather_data).await;
+            save_cached_weather(
+                resolved.latitude,
+                resolved.longitude,
+                &start_date,
+                &end_date,
+                &weather_data,
+            )
+            .await;
             Ok(OrchestratorResult {
                 resolved_location: resolved,
                 weather_data,
@@ -213,14 +226,19 @@ pub async fn run_orchestrator(
                         p_state.time = Some(0.0);
                     }
                 }
-                tracing::info!("⚡ Offline Mode: Failed to load online data. Reverting to local cache.");
+                tracing::info!(
+                    "⚡ Offline Mode: Failed to load online data. Reverting to local cache."
+                );
 
                 let mut stats = HashMap::new();
-                stats.insert("Cache".to_string(), ProviderStat {
-                    time_ms: 0.0,
-                    success: true,
-                    error: None,
-                });
+                stats.insert(
+                    "Cache".to_string(),
+                    ProviderStat {
+                        time_ms: 0.0,
+                        success: true,
+                        error: None,
+                    },
+                );
 
                 Ok(OrchestratorResult {
                     resolved_location: resolved,

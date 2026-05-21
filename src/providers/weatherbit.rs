@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct WeatherbitProvider;
@@ -47,7 +47,10 @@ impl BaseWeatherProvider for WeatherbitProvider {
 
         let url = format!(
             "https://api.weatherbit.io/v2.0/forecast/hourly?lat={}&lon={}&key={}&hours={}",
-            ctx.lat, ctx.lon, key, ctx.days * 24
+            ctx.lat,
+            ctx.lon,
+            key,
+            ctx.days * 24
         );
 
         let resp = ctx.client.get(&url).send().await?;
@@ -72,12 +75,12 @@ impl BaseWeatherProvider for WeatherbitProvider {
 
                 // Map Weatherbit code to WMO
                 let wmo = match code {
-                    200..=233 => 95, // Thunderstorm
+                    200..=233 => 95,             // Thunderstorm
                     300..=302 | 500..=522 => 63, // Rain
-                    600..=623 => 73, // Snow
-                    700..=751 => 45, // Fog
-                    800 => 0,        // Clear
-                    801..=804 => 3,  // Clouds
+                    600..=623 => 73,             // Snow
+                    700..=751 => 45,             // Fog
+                    800 => 0,                    // Clear
+                    801..=804 => 3,              // Clouds
                     _ => 0,
                 };
 

@@ -1,1 +1,1 @@
-pub use crate::shared::domain::models::{HourlyPoint, NormalizedWeatherData, AQIData};
+pub use crate::shared::domain::models::{AQIData, HourlyPoint, NormalizedWeatherData};

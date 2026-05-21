@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use crate::providers::base::{BaseWeatherProvider, FetchContext};
+use crate::providers::models::{AQIData, HourlyPoint, NormalizedWeatherData};
 use chrono::{NaiveDate, Utc};
 use serde::Deserialize;
-use crate::providers::base::{BaseWeatherProvider, FetchContext};
-use crate::providers::models::{HourlyPoint, NormalizedWeatherData, AQIData};
+use std::sync::Arc;
 
 const FORECAST_BASE: &str = "https://api.open-meteo.com/v1/forecast";
 const ARCHIVE_BASE: &str = "https://archive-api.open-meteo.com/v1/archive";
@@ -53,8 +53,22 @@ struct OpenMeteoResponse {
 }
 
 impl OpenMeteoProvider {
-    pub(crate) fn build_url(&self, base: &str, lat: f64, lon: f64, start: &str, end: &str, enrich: bool, minute_resolution: bool) -> String {
-        let vars = if enrich { HOURLY_VARS_ENRICHED } else { HOURLY_VARS_BASIC };
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn build_url(
+        &self,
+        base: &str,
+        lat: f64,
+        lon: f64,
+        start: &str,
+        end: &str,
+        enrich: bool,
+        minute_resolution: bool,
+    ) -> String {
+        let vars = if enrich {
+            HOURLY_VARS_ENRICHED
+        } else {
+            HOURLY_VARS_BASIC
+        };
         if minute_resolution {
             format!(
                 "{}?latitude={}&longitude={}&start_date={}&end_date={}&minutely_15={}&timezone=auto",
@@ -68,7 +82,11 @@ impl OpenMeteoProvider {
         }
     }
 
-    async fn fetch_url(&self, client: Arc<reqwest::Client>, url: &str) -> Result<OpenMeteoResponse, Box<dyn std::error::Error + Send + Sync>> {
+    async fn fetch_url(
+        &self,
+        client: Arc<reqwest::Client>,
+        url: &str,
+    ) -> Result<OpenMeteoResponse, Box<dyn std::error::Error + Send + Sync>> {
         let resp = client.get(url).send().await?;
         if !resp.status().is_success() {
             return Err(format!("Failed to reach Open-Meteo: HTTP {}", resp.status()).into());
@@ -77,11 +95,15 @@ impl OpenMeteoProvider {
         Ok(data)
     }
 
-    fn merge_responses(&self, mut archive: OpenMeteoResponse, mut forecast: OpenMeteoResponse) -> OpenMeteoResponse {
+    fn merge_responses(
+        &self,
+        mut archive: OpenMeteoResponse,
+        mut forecast: OpenMeteoResponse,
+    ) -> OpenMeteoResponse {
         if archive.minutely_15.is_some() || forecast.minutely_15.is_some() {
             let arch_min = archive.minutely_15.take();
             let fore_min = forecast.minutely_15.take();
-            
+
             let mut time = Vec::new();
             let mut temperature_2m = Vec::new();
             let mut precipitation = Vec::new();
@@ -144,7 +166,8 @@ impl OpenMeteoProvider {
         let mut apparent_temperature = arch_hourly.apparent_temperature.unwrap_or_default();
         apparent_temperature.extend(fore_hourly.apparent_temperature.unwrap_or_default());
 
-        let mut precipitation_probability = arch_hourly.precipitation_probability.unwrap_or_default();
+        let mut precipitation_probability =
+            arch_hourly.precipitation_probability.unwrap_or_default();
         precipitation_probability.extend(fore_hourly.precipitation_probability.unwrap_or_default());
 
         let mut precipitation = arch_hourly.precipitation.unwrap_or_default();
@@ -174,8 +197,10 @@ impl OpenMeteoProvider {
         let mut visibility = arch_hourly.visibility.unwrap_or_default();
         visibility.extend(fore_hourly.visibility.unwrap_or_default());
 
-        let mut soil_temperature_0_to_10cm = arch_hourly.soil_temperature_0_to_10cm.unwrap_or_default();
-        soil_temperature_0_to_10cm.extend(fore_hourly.soil_temperature_0_to_10cm.unwrap_or_default());
+        let mut soil_temperature_0_to_10cm =
+            arch_hourly.soil_temperature_0_to_10cm.unwrap_or_default();
+        soil_temperature_0_to_10cm
+            .extend(fore_hourly.soil_temperature_0_to_10cm.unwrap_or_default());
 
         let mut soil_moisture_0_to_10cm = arch_hourly.soil_moisture_0_to_10cm.unwrap_or_default();
         soil_moisture_0_to_10cm.extend(fore_hourly.soil_moisture_0_to_10cm.unwrap_or_default());
@@ -215,12 +240,36 @@ impl OpenMeteoProvider {
             let codes = m.weather_code.unwrap_or_default();
 
             for i in 0..len {
-                let temp = if i < temps.len() { temps[i].unwrap_or(0.0) } else { 0.0 };
-                let prec = if i < precs.len() { precs[i].unwrap_or(0.0) } else { 0.0 };
-                let hum = if i < hums.len() { hums[i].unwrap_or(0.0) } else { 0.0 };
-                let wind_sp = if i < wind_sps.len() { wind_sps[i].unwrap_or(0.0) } else { 0.0 };
-                let wind_dir = if i < wind_dirs.len() { wind_dirs[i].unwrap_or(0.0) } else { 0.0 };
-                let code = if i < codes.len() { codes[i].unwrap_or(0) } else { 0 };
+                let temp = if i < temps.len() {
+                    temps[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let prec = if i < precs.len() {
+                    precs[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let hum = if i < hums.len() {
+                    hums[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let wind_sp = if i < wind_sps.len() {
+                    wind_sps[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let wind_dir = if i < wind_dirs.len() {
+                    wind_dirs[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let code = if i < codes.len() {
+                    codes[i].unwrap_or(0)
+                } else {
+                    0
+                };
 
                 points.push(HourlyPoint {
                     time: m.time[i].clone(),
@@ -261,21 +310,73 @@ impl OpenMeteoProvider {
             let soil_moistures = h.soil_moisture_0_to_10cm.unwrap_or_default();
 
             for i in 0..len {
-                let temp = if i < temps.len() { temps[i].unwrap_or(0.0) } else { 0.0 };
-                let app_temp = if i < app_temps.len() { app_temps[i].unwrap_or(0.0) } else { 0.0 };
-                let prec_prob = if i < prec_probs.len() { prec_probs[i].unwrap_or(0.0) } else { 0.0 };
-                let prec = if i < precs.len() { precs[i].unwrap_or(0.0) } else { 0.0 };
-                let hum = if i < hums.len() { hums[i].unwrap_or(0.0) } else { 0.0 };
-                let wind_sp = if i < wind_sps.len() { wind_sps[i].unwrap_or(0.0) } else { 0.0 };
-                let wind_dir = if i < wind_dirs.len() { wind_dirs[i].unwrap_or(0.0) } else { 0.0 };
-                let cloud = if i < clouds.len() { clouds[i].unwrap_or(0.0) } else { 0.0 };
-                let code = if i < codes.len() { codes[i].unwrap_or(0) } else { 0 };
+                let temp = if i < temps.len() {
+                    temps[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let app_temp = if i < app_temps.len() {
+                    app_temps[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let prec_prob = if i < prec_probs.len() {
+                    prec_probs[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let prec = if i < precs.len() {
+                    precs[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let hum = if i < hums.len() {
+                    hums[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let wind_sp = if i < wind_sps.len() {
+                    wind_sps[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let wind_dir = if i < wind_dirs.len() {
+                    wind_dirs[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let cloud = if i < clouds.len() {
+                    clouds[i].unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let code = if i < codes.len() {
+                    codes[i].unwrap_or(0)
+                } else {
+                    0
+                };
 
                 let uv = if i < uvs.len() { uvs[i] } else { None };
-                let day = if i < days.len() { days[i].map(|d| d == 1) } else { None };
-                let vis = if i < visibilities.len() { visibilities[i] } else { None };
-                let stemp = if i < soil_temps.len() { soil_temps[i] } else { None };
-                let smoist = if i < soil_moistures.len() { soil_moistures[i] } else { None };
+                let day = if i < days.len() {
+                    days[i].map(|d| d == 1)
+                } else {
+                    None
+                };
+                let vis = if i < visibilities.len() {
+                    visibilities[i]
+                } else {
+                    None
+                };
+                let stemp = if i < soil_temps.len() {
+                    soil_temps[i]
+                } else {
+                    None
+                };
+                let smoist = if i < soil_moistures.len() {
+                    soil_moistures[i]
+                } else {
+                    None
+                };
 
                 // Build a simulated AQI if enrich is active, since Open-Meteo standard API does not return AQI in weather,
                 // but we can estimate/simulate reasonable metrics or pull them. We will simulate AQI data if enrich is true.
@@ -332,21 +433,55 @@ impl BaseWeatherProvider for OpenMeteoProvider {
         let today = Utc::now().naive_utc().date();
         let s = NaiveDate::parse_from_str(ctx.start_date, "%Y-%m-%d")?;
         let e = NaiveDate::parse_from_str(ctx.end_date, "%Y-%m-%d")?;
-        
+
         // Open-Meteo supports up to 16 days of standard forecast, or 40 days if experimental
         let forecast_limit = today + chrono::Duration::days(40);
 
         let raw_data = if e < today {
-            let url = self.build_url(ARCHIVE_BASE, ctx.lat, ctx.lon, ctx.start_date, ctx.end_date, ctx.enrich, ctx.minute_resolution);
+            let url = self.build_url(
+                ARCHIVE_BASE,
+                ctx.lat,
+                ctx.lon,
+                ctx.start_date,
+                ctx.end_date,
+                ctx.enrich,
+                ctx.minute_resolution,
+            );
             self.fetch_url(ctx.client.clone(), &url).await?
         } else if s >= today && e <= forecast_limit {
-            let url = self.build_url(FORECAST_BASE, ctx.lat, ctx.lon, ctx.start_date, ctx.end_date, ctx.enrich, ctx.minute_resolution);
+            let url = self.build_url(
+                FORECAST_BASE,
+                ctx.lat,
+                ctx.lon,
+                ctx.start_date,
+                ctx.end_date,
+                ctx.enrich,
+                ctx.minute_resolution,
+            );
             self.fetch_url(ctx.client.clone(), &url).await?
         } else {
-            let archive_end = (today - chrono::Duration::days(1)).format("%Y-%m-%d").to_string();
+            let archive_end = (today - chrono::Duration::days(1))
+                .format("%Y-%m-%d")
+                .to_string();
             let forecast_start = today.format("%Y-%m-%d").to_string();
-            let archive_url = self.build_url(ARCHIVE_BASE, ctx.lat, ctx.lon, ctx.start_date, &archive_end, ctx.enrich, ctx.minute_resolution);
-            let forecast_url = self.build_url(FORECAST_BASE, ctx.lat, ctx.lon, &forecast_start, ctx.end_date, ctx.enrich, ctx.minute_resolution);
+            let archive_url = self.build_url(
+                ARCHIVE_BASE,
+                ctx.lat,
+                ctx.lon,
+                ctx.start_date,
+                &archive_end,
+                ctx.enrich,
+                ctx.minute_resolution,
+            );
+            let forecast_url = self.build_url(
+                FORECAST_BASE,
+                ctx.lat,
+                ctx.lon,
+                &forecast_start,
+                ctx.end_date,
+                ctx.enrich,
+                ctx.minute_resolution,
+            );
 
             let (archive_resp, forecast_resp) = tokio::join!(
                 self.fetch_url(ctx.client.clone(), &archive_url),
@@ -366,7 +501,15 @@ mod tests {
     #[test]
     fn test_openmeteo_url_builder() {
         let provider = OpenMeteoProvider;
-        let url = provider.build_url("https://api.open-meteo.com/v1/forecast", 41.0082, 28.9784, "2026-05-19", "2026-05-19", true, false);
+        let url = provider.build_url(
+            "https://api.open-meteo.com/v1/forecast",
+            41.0082,
+            28.9784,
+            "2026-05-19",
+            "2026-05-19",
+            true,
+            false,
+        );
         assert!(url.contains("latitude=41.0082"));
         assert!(url.contains("longitude=28.9784"));
         assert!(url.contains("start_date=2026-05-19"));

@@ -4,7 +4,10 @@ use weather_oz::geocoding::normalize_query;
 fn test_normalize_query_stripping() {
     let result = normalize_query("Yeni Istanbul");
     assert!(result.contains(&"Istanbul".to_string()));
-    assert!(result.contains(&"yeni istanbul".to_string()) || result.contains(&"Yeni Istanbul".to_string()));
+    assert!(
+        result.contains(&"yeni istanbul".to_string())
+            || result.contains(&"Yeni Istanbul".to_string())
+    );
 }
 
 #[test]
@@ -26,53 +29,53 @@ async fn test_coordinate_precision() {
 
 #[tokio::test]
 async fn test_cache_expiration_ttl() {
-    use weather_oz::geocoding::resolve_location;
     use std::time::SystemTime;
+    use weather_oz::geocoding::resolve_location;
 
     let client = std::sync::Arc::new(reqwest::Client::new());
     let cache_dir = std::env::temp_dir();
     let cache_path = cache_dir.join("test_ttl_geo_cache.json");
-    
+
     std::env::set_var("WEATHER_OZ_CACHE_PATH", cache_path.to_str().unwrap());
     let _ = std::fs::remove_file(&cache_path);
-    
+
     let now_secs = SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs_f64();
-        
+
     let expired_secs = now_secs - (31.0 * 24.0 * 60.0 * 60.0);
     let expired_content = format!(
         r#"{{"expiredcity":{{"data":{{"name":"ExpiredCity","latitude":40.1234,"longitude":29.1234,"country":"Turkey","admin1":"Bursa"}},"timestamp":{}}}}}"#,
         expired_secs
     );
     std::fs::write(&cache_path, expired_content).unwrap();
-    
+
     let result_expired = resolve_location(client.clone(), "expiredcity", None).await;
     assert!(result_expired.is_err());
-    
+
     let valid_secs = now_secs - (1.0 * 24.0 * 60.0 * 60.0);
     let valid_content = format!(
         r#"{{"validcity":{{"data":{{"name":"ValidCity","latitude":40.1234,"longitude":29.1234,"country":"Turkey","admin1":"Bursa"}},"timestamp":{}}}}}"#,
         valid_secs
     );
     std::fs::write(&cache_path, valid_content).unwrap();
-    
+
     let result_valid = resolve_location(client, "validcity", None).await;
     assert!(result_valid.is_ok());
     let loc = result_valid.unwrap();
     assert_eq!(loc.name, "ValidCity");
     assert_eq!(loc.latitude, 40.1234);
-    
+
     let _ = std::fs::remove_file(&cache_path);
     std::env::remove_var("WEATHER_OZ_CACHE_PATH");
 }
 
 #[tokio::test]
 async fn test_resolve_ip_location_success() {
-    use weather_oz::geocoding::resolve_ip_location;
-    use tokio::net::TcpListener;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+    use weather_oz::geocoding::resolve_ip_location;
 
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
@@ -100,9 +103,9 @@ async fn test_resolve_ip_location_success() {
 
 #[tokio::test]
 async fn test_resolve_ip_location_failure() {
-    use weather_oz::geocoding::resolve_ip_location;
-    use tokio::net::TcpListener;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+    use weather_oz::geocoding::resolve_ip_location;
 
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();

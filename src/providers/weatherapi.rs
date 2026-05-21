@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct WeatherApiProvider;
@@ -86,10 +86,10 @@ impl BaseWeatherProvider for WeatherApiProvider {
 
                             // Map WeatherAPI condition code to WMO
                             let wmo = match code {
-                                1000 => 0,        // Sunny/Clear
-                                1003 => 2,        // Partly cloudy
-                                1006 | 1009 => 3, // Cloudy/Overcast
-                                1030 | 1135 => 45, // Mist/Fog
+                                1000 => 0,                // Sunny/Clear
+                                1003 => 2,                // Partly cloudy
+                                1006 | 1009 => 3,         // Cloudy/Overcast
+                                1030 | 1135 => 45,        // Mist/Fog
                                 1063 | 1180..=1201 => 61, // Patchy/light rain
                                 1066 | 1210..=1225 => 73, // Snow
                                 1087 | 1273..=1282 => 95, // Thunder

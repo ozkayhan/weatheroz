@@ -1,6 +1,8 @@
-use std::time::SystemTime;
+#![allow(clippy::await_holding_lock)]
+
 use std::sync::Mutex;
-use weather_oz::providers::models::{NormalizedWeatherData, HourlyPoint};
+use std::time::SystemTime;
+use weather_oz::providers::models::{HourlyPoint, NormalizedWeatherData};
 use weather_oz::weather_cache::{get_cached_weather, save_cached_weather};
 
 static TEST_MUTEX: Mutex<()> = Mutex::new(());
@@ -79,7 +81,10 @@ async fn test_weather_cache_stale() {
         .as_secs_f64();
     let stale_secs = now_secs - (16.0 * 60.0);
 
-    let key = format!("{:.4}:{:.4}:{}:{}", 41.0138, 28.9497, "2026-05-21", "2026-05-21");
+    let key = format!(
+        "{:.4}:{:.4}:{}:{}",
+        41.0138, 28.9497, "2026-05-21", "2026-05-21"
+    );
     let mut cache = std::collections::HashMap::new();
 
     #[derive(serde::Serialize)]
@@ -87,14 +92,20 @@ async fn test_weather_cache_stale() {
         data: NormalizedWeatherData,
         timestamp: f64,
     }
-    cache.insert(key, TestEntry {
-        data: dummy_data,
-        timestamp: stale_secs,
-    });
+    cache.insert(
+        key,
+        TestEntry {
+            data: dummy_data,
+            timestamp: stale_secs,
+        },
+    );
     std::fs::write(&cache_path, serde_json::to_string_pretty(&cache).unwrap()).unwrap();
 
     let retrieved = get_cached_weather(41.0138, 28.9497, "2026-05-21", "2026-05-21", None).await;
-    assert!(retrieved.is_some(), "retrieved cache is None; expected Some");
+    assert!(
+        retrieved.is_some(),
+        "retrieved cache is None; expected Some"
+    );
     let (data, is_fresh, ts) = retrieved.unwrap();
     assert!(!is_fresh);
     assert_eq!(data.provider_name, "MockProviderStale");
@@ -127,7 +138,11 @@ fn test_cli_weather_cache_hit() {
     std::fs::write(&geo_cache_path, geo_cache_content).unwrap();
 
     // 2. Write weather cache
-    let today_str = chrono::Utc::now().naive_utc().date().format("%Y-%m-%d").to_string();
+    let today_str = chrono::Utc::now()
+        .naive_utc()
+        .date()
+        .format("%Y-%m-%d")
+        .to_string();
     let key = format!("{:.4}:{:.4}:{}:{}", 45.1234, 12.1234, today_str, today_str);
     let weather_cache_content = format!(
         r#"{{"{}":{{"data":{{"provider_name":"CachedProvider","hourly":[]}},"timestamp":{}}}}}"#,
@@ -183,7 +198,11 @@ fn test_cli_offline_fallback() {
 
     // 2. Write weather cache with stale timestamp (16 minutes ago)
     let stale_secs = now_secs - (16.0 * 60.0);
-    let today_str = chrono::Utc::now().naive_utc().date().format("%Y-%m-%d").to_string();
+    let today_str = chrono::Utc::now()
+        .naive_utc()
+        .date()
+        .format("%Y-%m-%d")
+        .to_string();
     let key = format!("{:.4}:{:.4}:{}:{}", 99.0, 199.0, today_str, today_str);
     let weather_cache_content = format!(
         r#"{{"{}":{{"data":{{"provider_name":"StaleProvider","hourly":[]}},"timestamp":{}}}}}"#,

@@ -1,10 +1,10 @@
-use chrono::{NaiveDateTime, Datelike, Timelike};
+use crate::geocoding::GeocodedLocation;
+use crate::providers::models::HourlyPoint;
+use chrono::{Datelike, NaiveDateTime, Timelike};
 use comfy_table::presets::NOTHING;
 use comfy_table::Table;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use crate::geocoding::GeocodedLocation;
-use crate::providers::models::HourlyPoint;
 
 fn get_weather_info(weather_code: i32) -> (&'static str, &'static str) {
     match weather_code {
@@ -65,7 +65,10 @@ pub fn print_location_info(location: &GeocodedLocation) {
     let location_str = parts.join(", ");
     println!();
     println!("📍 \x1b[1;36m{}\x1b[0m", location_str);
-    println!("   Coordinates: {:.4}°, {:.4}°", location.latitude, location.longitude);
+    println!(
+        "   Coordinates: {:.4}°, {:.4}°",
+        location.latitude, location.longitude
+    );
     println!();
 }
 
@@ -96,18 +99,23 @@ pub fn print_date_range_info(start_date: &str, end_date: &str, data_type: &str) 
 }
 
 pub fn print_offline_warning(timestamp: f64) {
-    use chrono::{TimeZone, Local};
+    use chrono::{Local, TimeZone};
     let formatted = match Local.timestamp_opt(timestamp as i64, 0) {
         chrono::LocalResult::Single(dt) => dt.format("%Y-%m-%d %H:%M:%S").to_string(),
         _ => {
             use chrono::Utc;
             match Utc.timestamp_opt(timestamp as i64, 0) {
-                chrono::LocalResult::Single(dt) => format!("{} UTC", dt.format("%Y-%m-%d %H:%M:%S")),
+                chrono::LocalResult::Single(dt) => {
+                    format!("{} UTC", dt.format("%Y-%m-%d %H:%M:%S"))
+                }
                 _ => "unknown time".to_string(),
             }
         }
     };
-    println!("⚡ \x1b[1;33mOffline Mode:\x1b[0m \x1b[1mCached data from {}\x1b[0m", formatted);
+    println!(
+        "⚡ \x1b[1;33mOffline Mode:\x1b[0m \x1b[1mCached data from {}\x1b[0m",
+        formatted
+    );
     println!();
 }
 
@@ -151,7 +159,12 @@ pub fn print_hourly_table(hourly_points: &[HourlyPoint], max_rows: usize) {
         let formatted_t = match parsed {
             Some(dt) => {
                 if is_multi_day {
-                    format!("{:02} {:02}:{:02}", dt.date().day(), dt.time().hour(), dt.time().minute())
+                    format!(
+                        "{:02} {:02}:{:02}",
+                        dt.date().day(),
+                        dt.time().hour(),
+                        dt.time().minute()
+                    )
                 } else {
                     format!("{:02}:{:02}", dt.time().hour(), dt.time().minute())
                 }
@@ -195,7 +208,11 @@ pub fn print_hourly_table(hourly_points: &[HourlyPoint], max_rows: usize) {
 
     if has_more {
         println!();
-        println!("\x1b[2mShowing first {} of {} hours. Use --all-hours to see all.\x1b[0m", max_rows, hourly_points.len());
+        println!(
+            "\x1b[2mShowing first {} of {} hours. Use --all-hours to see all.\x1b[0m",
+            max_rows,
+            hourly_points.len()
+        );
     }
 }
 
@@ -205,20 +222,76 @@ pub fn print_hourly_table(hourly_points: &[HourlyPoint], max_rows: usize) {
 
 fn get_large_char(c: char, line: usize) -> &'static str {
     match (c, line) {
-        ('0', 0) => "  ███  ", ('0', 1) => " ██ ██ ", ('0', 2) => "██   ██", ('0', 3) => " ██ ██ ", ('0', 4) => "  ███  ",
-        ('1', 0) => "   ██  ", ('1', 1) => "  ███  ", ('1', 2) => "   ██  ", ('1', 3) => "   ██  ", ('1', 4) => " █████ ",
-        ('2', 0) => "  ███  ", ('2', 1) => " ██ ██ ", ('2', 2) => "   ██  ", ('2', 3) => "  ██   ", ('2', 4) => " █████ ",
-        ('3', 0) => " ████  ", ('3', 1) => "    ██ ", ('3', 2) => "  ███  ", ('3', 3) => "    ██ ", ('3', 4) => " ████  ",
-        ('4', 0) => " ██  ██", ('4', 1) => " ██  ██", ('4', 2) => " ██████", ('4', 3) => "     ██", ('4', 4) => "     ██",
-        ('5', 0) => " █████ ", ('5', 1) => " ██    ", ('5', 2) => " ████  ", ('5', 3) => "    ██ ", ('5', 4) => " ████  ",
-        ('6', 0) => "  ███  ", ('6', 1) => " ██    ", ('6', 2) => " ████  ", ('6', 3) => " ██ ██ ", ('6', 4) => "  ███  ",
-        ('7', 0) => " █████ ", ('7', 1) => "    ██ ", ('7', 2) => "   ██  ", ('7', 3) => "  ██   ", ('7', 4) => " ██    ",
-        ('8', 0) => "  ███  ", ('8', 1) => " ██ ██ ", ('8', 2) => "  ███  ", ('8', 3) => " ██ ██ ", ('8', 4) => "  ███  ",
-        ('9', 0) => "  ███  ", ('9', 1) => " ██ ██ ", ('9', 2) => "  ████ ", ('9', 3) => "    ██ ", ('9', 4) => "  ███  ",
-        ('-', 0) => "       ", ('-', 1) => "       ", ('-', 2) => " █████ ", ('-', 3) => "       ", ('-', 4) => "       ",
-        ('.', 0) => "       ", ('.', 1) => "       ", ('.', 2) => "       ", ('.', 3) => "  ██   ", ('.', 4) => "  ██   ",
-        ('C', 0) => "  ████ ", ('C', 1) => " ██    ", ('C', 2) => " ██    ", ('C', 3) => " ██    ", ('C', 4) => "  ████ ",
-        ('°', 0) => "  ██   ", ('°', 1) => " ██ ██ ", ('°', 2) => "  ██   ", ('°', 3) => "       ", ('°', 4) => "       ",
+        ('0', 0) => "  ███  ",
+        ('0', 1) => " ██ ██ ",
+        ('0', 2) => "██   ██",
+        ('0', 3) => " ██ ██ ",
+        ('0', 4) => "  ███  ",
+        ('1', 0) => "   ██  ",
+        ('1', 1) => "  ███  ",
+        ('1', 2) => "   ██  ",
+        ('1', 3) => "   ██  ",
+        ('1', 4) => " █████ ",
+        ('2', 0) => "  ███  ",
+        ('2', 1) => " ██ ██ ",
+        ('2', 2) => "   ██  ",
+        ('2', 3) => "  ██   ",
+        ('2', 4) => " █████ ",
+        ('3', 0) => " ████  ",
+        ('3', 1) => "    ██ ",
+        ('3', 2) => "  ███  ",
+        ('3', 3) => "    ██ ",
+        ('3', 4) => " ████  ",
+        ('4', 0) => " ██  ██",
+        ('4', 1) => " ██  ██",
+        ('4', 2) => " ██████",
+        ('4', 3) => "     ██",
+        ('4', 4) => "     ██",
+        ('5', 0) => " █████ ",
+        ('5', 1) => " ██    ",
+        ('5', 2) => " ████  ",
+        ('5', 3) => "    ██ ",
+        ('5', 4) => " ████  ",
+        ('6', 0) => "  ███  ",
+        ('6', 1) => " ██    ",
+        ('6', 2) => " ████  ",
+        ('6', 3) => " ██ ██ ",
+        ('6', 4) => "  ███  ",
+        ('7', 0) => " █████ ",
+        ('7', 1) => "    ██ ",
+        ('7', 2) => "   ██  ",
+        ('7', 3) => "  ██   ",
+        ('7', 4) => " ██    ",
+        ('8', 0) => "  ███  ",
+        ('8', 1) => " ██ ██ ",
+        ('8', 2) => "  ███  ",
+        ('8', 3) => " ██ ██ ",
+        ('8', 4) => "  ███  ",
+        ('9', 0) => "  ███  ",
+        ('9', 1) => " ██ ██ ",
+        ('9', 2) => "  ████ ",
+        ('9', 3) => "    ██ ",
+        ('9', 4) => "  ███  ",
+        ('-', 0) => "       ",
+        ('-', 1) => "       ",
+        ('-', 2) => " █████ ",
+        ('-', 3) => "       ",
+        ('-', 4) => "       ",
+        ('.', 0) => "       ",
+        ('.', 1) => "       ",
+        ('.', 2) => "       ",
+        ('.', 3) => "  ██   ",
+        ('.', 4) => "  ██   ",
+        ('C', 0) => "  ████ ",
+        ('C', 1) => " ██    ",
+        ('C', 2) => " ██    ",
+        ('C', 3) => " ██    ",
+        ('C', 4) => "  ████ ",
+        ('°', 0) => "  ██   ",
+        ('°', 1) => " ██ ██ ",
+        ('°', 2) => "  ██   ",
+        ('°', 3) => "       ",
+        ('°', 4) => "       ",
         _ => "       ",
     }
 }
@@ -270,6 +343,7 @@ fn get_ascii_art(weather_code: i32) -> Vec<&'static str> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn render_mode(
     mode: &str,
     location: &GeocodedLocation,
@@ -303,12 +377,21 @@ pub fn render_mode(
         "compact" => {
             let art = get_ascii_art(current.weather_code);
             println!();
-            println!("📍 \x1b[1;36m{}, {}\x1b[0m", location.name, location.country);
+            println!(
+                "📍 \x1b[1;36m{}, {}\x1b[0m",
+                location.name, location.country
+            );
             println!("📅 {}", start_date);
             println!();
-            println!("  {}   Temp:       \x1b[1;31m{:.1}°C\x1b[0m (Feels like: {:.1}°C)", art[0], current.temperature, current.apparent_temperature);
+            println!(
+                "  {}   Temp:       \x1b[1;31m{:.1}°C\x1b[0m (Feels like: {:.1}°C)",
+                art[0], current.temperature, current.apparent_temperature
+            );
             println!("  {}   Condition:  {} {}", art[1], emoji, desc);
-            println!("  {}   Wind:       {:.1} km/h {}", art[2], current.wind_speed, wind_compass);
+            println!(
+                "  {}   Wind:       {:.1} km/h {}",
+                art[2], current.wind_speed, wind_compass
+            );
             println!("  {}   Humidity:   {:.0}%", art[3], current.humidity);
             println!("  {}   Cloudiness: {:.0}%", art[4], current.cloud_cover);
             println!();
@@ -323,7 +406,10 @@ pub fn render_mode(
 
         "json" => {
             let mut wrapper = HashMap::new();
-            wrapper.insert("provider_name", serde_json::to_value(provider_name).unwrap());
+            wrapper.insert(
+                "provider_name",
+                serde_json::to_value(provider_name).unwrap(),
+            );
             wrapper.insert("hourly", serde_json::to_value(hourly_points).unwrap());
             wrapper.insert("resolved_location", serde_json::to_value(location).unwrap());
             wrapper.insert("location", serde_json::to_value(location).unwrap());
@@ -346,7 +432,10 @@ pub fn render_mode(
             println!("🔥 Feels Like:  {:.1}°C", current.apparent_temperature);
             println!("🌤️ Condition:   {} {}", emoji, desc);
             println!("💦 Humidity:    {:.0}%", current.humidity);
-            println!("💨 Wind:        {:.1} km/h direction {}° ({})", current.wind_speed, current.wind_direction, wind_compass);
+            println!(
+                "💨 Wind:        {:.1} km/h direction {}° ({})",
+                current.wind_speed, current.wind_direction, wind_compass
+            );
             println!("☁️ Cloudiness:  {:.0}%", current.cloud_cover);
             if let Some(uv) = current.uv_index {
                 println!("☀️ UV Index:    {:.1}", uv);
@@ -378,7 +467,11 @@ pub fn render_mode(
 
         "sparkline" => {
             let count = std::cmp::min(24, hourly_points.len());
-            let day_temps: Vec<f64> = hourly_points.iter().take(count).map(|p| p.temperature).collect();
+            let day_temps: Vec<f64> = hourly_points
+                .iter()
+                .take(count)
+                .map(|p| p.temperature)
+                .collect();
             let spark = get_sparkline(&day_temps);
             let min = day_temps.iter().copied().fold(f64::INFINITY, f64::min);
             let max = day_temps.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -392,7 +485,10 @@ pub fn render_mode(
         }
 
         "bordered-card" => {
-            let header = format!("║  Weather Card: {}, {}  ║", location.name, location.country);
+            let header = format!(
+                "║  Weather Card: {}, {}  ║",
+                location.name, location.country
+            );
             let width = header.chars().count() - 2;
             let top_border = format!("╔{}╗", "═".repeat(width));
             let bot_border = format!("╚{}╝", "═".repeat(width));
@@ -403,21 +499,53 @@ pub fn render_mode(
             println!("{}", header);
             println!("{}", divider);
             println!("║  Date:      {:width$}  ║", start_date, width = width - 12);
-            println!("║  Temp:      {:.1}°C ({:.1}°C) {:width$}  ║", current.temperature, current.apparent_temperature, "", width = width - 25);
-            println!("║  Condition: {} {} {:width$}  ║", emoji, desc, "", width = width - 15 - desc.len());
-            println!("║  Wind:      {:.1} km/h {} {:width$}  ║", current.wind_speed, wind_compass, "", width = width - 18 - wind_compass.len());
-            println!("║  Humidity:  {:.0}% {:width$}  ║", current.humidity, "", width = width - 15);
+            println!(
+                "║  Temp:      {:.1}°C ({:.1}°C) {:width$}  ║",
+                current.temperature,
+                current.apparent_temperature,
+                "",
+                width = width - 25
+            );
+            println!(
+                "║  Condition: {} {} {:width$}  ║",
+                emoji,
+                desc,
+                "",
+                width = width - 15 - desc.len()
+            );
+            println!(
+                "║  Wind:      {:.1} km/h {} {:width$}  ║",
+                current.wind_speed,
+                wind_compass,
+                "",
+                width = width - 18 - wind_compass.len()
+            );
+            println!(
+                "║  Humidity:  {:.0}% {:width$}  ║",
+                current.humidity,
+                "",
+                width = width - 15
+            );
             println!("{}", bot_border);
             println!();
         }
 
         "markdown" => {
             println!();
-            println!("# Weather Report for {}, {}", location.name, location.country);
+            println!(
+                "# Weather Report for {}, {}",
+                location.name, location.country
+            );
             println!("- **Date**: {}", start_date);
-            println!("- **Temperature**: {:.1}°C (Feels like: {:.1}°C)", current.temperature, current.apparent_temperature);
+            println!(
+                "- **Temperature**: {:.1}°C (Feels like: {:.1}°C)",
+                current.temperature, current.apparent_temperature
+            );
             println!("- **Condition**: {} {}", emoji, desc);
-            println!("- **Wind**: {:.1} km/h direction {} ({})", current.wind_speed, current.wind_direction, wind_compass);
+            println!(
+                "- **Wind**: {:.1} km/h direction {} ({})",
+                current.wind_speed, current.wind_direction, wind_compass
+            );
             println!("- **Humidity**: {:.0}%", current.humidity);
             println!("- **Cloud Cover**: {:.0}%", current.cloud_cover);
             if let Some(uv) = current.uv_index {
@@ -430,7 +558,8 @@ pub fn render_mode(
         }
 
         "html-preview" => {
-            let html_content = format!(r#"<!DOCTYPE html>
+            let html_content = format!(
+                r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -627,15 +756,27 @@ fn get_sparkline(temps: &[f64]) -> String {
 }
 
 pub fn print_error_block(error_msg: &str) {
-    let mut suggestion = "Please double check your command arguments or run 'weather --help' for details.".to_string();
-    
+    let mut suggestion =
+        "Please double check your command arguments or run 'weather --help' for details."
+            .to_string();
+
     // Automatically match common errors to provide exceptionally helpful recommendations
     let lower = error_msg.to_lowercase();
     if lower.contains("date must be in yyyy-mm-dd format") || lower.contains("date") {
         suggestion = "Use the correct ISO format. Example: '--from-date 2026-05-21'".to_string();
-    } else if lower.contains("otomatik tespit edilemedi") || lower.contains("location query could not be resolved") || lower.contains("cihaz konumu") || lower.contains("no geocoding results") || lower.contains("girilmedi") {
+    } else if lower.contains("otomatik tespit edilemedi")
+        || lower.contains("location query could not be resolved")
+        || lower.contains("cihaz konumu")
+        || lower.contains("no geocoding results")
+        || lower.contains("girilmedi")
+    {
         suggestion = "The automatic geocoding system could not identify your location. Provide a city name directly. Example: 'weather Istanbul'".to_string();
-    } else if lower.contains("offline") || lower.contains("dns error") || lower.contains("connect") || lower.contains("timeout") || lower.contains("network") {
+    } else if lower.contains("offline")
+        || lower.contains("dns error")
+        || lower.contains("connect")
+        || lower.contains("timeout")
+        || lower.contains("network")
+    {
         suggestion = "An internet connection error occurred. Check your network or run without network-dependent flags.".to_string();
     } else if lower.contains("api key") || lower.contains("unauthorized") {
         suggestion = "An API key issue was encountered. Verify your configuration in '~/.config/weather_oz/config.json' or set the appropriate environment variables.".to_string();
@@ -649,13 +790,20 @@ pub fn print_error_block(error_msg: &str) {
     let border_width = std::cmp::max(max_len, 60);
 
     let horizontal_border = "═".repeat(border_width + 2);
-    
+
     println!();
     println!("\x1b[1;31m╔{}╗\x1b[0m", horizontal_border);
-    println!("\x1b[1;31m║\x1b[0m  \x1b[1;37m{:<width$}\x1b[0m  \x1b[1;31m║\x1b[0m", err_line, width = border_width);
+    println!(
+        "\x1b[1;31m║\x1b[0m  \x1b[1;37m{:<width$}\x1b[0m  \x1b[1;31m║\x1b[0m",
+        err_line,
+        width = border_width
+    );
     println!("\x1b[1;31m╠{}╣\x1b[0m", horizontal_border);
-    println!("\x1b[1;31m║\x1b[0m  \x1b[1;32m{:<width$}\x1b[0m  \x1b[1;31m║\x1b[0m", sugg_line, width = border_width);
+    println!(
+        "\x1b[1;31m║\x1b[0m  \x1b[1;32m{:<width$}\x1b[0m  \x1b[1;31m║\x1b[0m",
+        sugg_line,
+        width = border_width
+    );
     println!("\x1b[1;31m╚{}╝\x1b[0m", horizontal_border);
     println!();
 }
-

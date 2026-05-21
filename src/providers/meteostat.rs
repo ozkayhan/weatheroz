@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct MeteostatProvider;
@@ -40,7 +40,9 @@ impl BaseWeatherProvider for MeteostatProvider {
                 let mut points = Vec::new();
                 let today = chrono::Utc::now().naive_utc().date();
                 for d in 0..ctx.days {
-                    let current_date = (today + chrono::Duration::days(d as i64)).format("%Y-%m-%d").to_string();
+                    let current_date = (today + chrono::Duration::days(d as i64))
+                        .format("%Y-%m-%d")
+                        .to_string();
                     for h in 0..24 {
                         points.push(HourlyPoint {
                             time: format!("{}T{:02}:00", current_date, h),
@@ -74,10 +76,7 @@ impl BaseWeatherProvider for MeteostatProvider {
             ctx.lat, ctx.lon, ctx.start_date, ctx.end_date
         );
 
-        let resp = ctx.client.get(&url)
-            .header("x-api-key", key)
-            .send()
-            .await?;
+        let resp = ctx.client.get(&url).header("x-api-key", key).send().await?;
 
         if !resp.status().is_success() {
             return Err(format!("Meteostat HTTP error {}", resp.status()).into());

@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct TomorrowIoProvider;
@@ -46,13 +46,13 @@ struct TomorrowResponse {
 
 fn tomorrow_code_to_wmo(code: i32) -> i32 {
     match code {
-        1000 => 0,        // Clear
-        1100..=1102 => 2, // Partly cloudy
-        1001 => 3,        // Cloudy
+        1000 => 0,         // Clear
+        1100..=1102 => 2,  // Partly cloudy
+        1001 => 3,         // Cloudy
         2000..=2100 => 45, // Fog
         4000..=4201 => 63, // Rain
         5000..=5101 => 73, // Snow
-        8000 => 95,       // Thunder
+        8000 => 95,        // Thunder
         _ => 0,
     }
 }
@@ -87,7 +87,13 @@ impl BaseWeatherProvider for TomorrowIoProvider {
         if let Some(timelines) = raw.timelines {
             if let Some(hourly) = timelines.hourly {
                 for item in hourly {
-                    let time_formatted = item.time.replace('Z', "").split('+').next().unwrap_or("").to_string();
+                    let time_formatted = item
+                        .time
+                        .replace('Z', "")
+                        .split('+')
+                        .next()
+                        .unwrap_or("")
+                        .to_string();
                     let date_part = time_formatted.split('T').next().unwrap_or("");
                     if date_part < ctx.start_date || date_part > ctx.end_date {
                         continue;

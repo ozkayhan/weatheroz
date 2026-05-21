@@ -1,27 +1,27 @@
-# Hava Durumu CLI - Temel Prensipler ve Değişmez Amacımız
+# Weather CLI - Core Principles & Our Unalterable Mission
 
-Bu doküman, projenin sürümü ne olursa olsun (v1.0'dan v10.0'a ve ötesine kadar) asla değişmeyecek olan temel prensiplerimizi ve nihai amacımızı tanımlar. Projeye yapılan her katkı, eklenen her kod satırı ve her mimari değişiklik bu hedefler doğrultusunda değerlendirilmelidir.
-
----
-
-## 🎯 Değişmez Amacımız (Hedefimiz)
-
-Uygulamanın sürümü kaç olursa olsun, amacımız her zaman ve her koşulda şunları sağlamaktır:
-
-1. **Daha Performanslı:** CPU ve kaynak kullanımı açısından en yüksek verimlilik.
-2. **Daha Yüksek Uptime:** Kesintisiz hizmet, hata toleransı yüksek yapı ve her koşulda çalışabilirlik.
-3. **Daha Gerçek & Doğru Veri:** Farklı kaynaklardan gelen verilerin en doğru ve tutarlı şekilde harmanlanması, hata payının sıfıra indirilmesi.
-4. **Daha Hızlı Çalışma:** Milisaniyeler seviyesinde çalışma ve yanıt süreleri, optimize edilmiş ağ istekleri.
-5. **0 Dependency (Sıfır Bağımlılık):** Üçüncü parti kütüphanelere bağımlılığın minimuma (mümkünse sıfıra) indirilmesi, hafif ve güvenli bir kod tabanı.
-6. **Daha Az RAM Tüketimi:** Bellek yönetiminin optimize edilmesi, bellek sızıntılarının önlenmesi ve en düşük RAM ayak izi.
-7. **Daha Çok Özellik:** Kullanıcı deneyimini zenginleştiren, performanstan ödün vermeyen yenilikçi ve faydalı özellikler.
+This document defines the core principles and ultimate goals of our project, which shall remain constant regardless of the application's version (from v1.0 to v10.0 and beyond). Every contribution, code addition, and architectural modification must be evaluated with respect to these principles.
 
 ---
 
-## 🛡️ Prensiplerin Uygulanması
+## 🎯 Our Unalterable Mission (Goals)
 
-Geliştirilen her yeni özellik veya yapılan her refaktör işleminde kendimize şu soruları sormalıyız:
-* *Bu değişiklik RAM veya CPU tüketimini artırıyor mu?*
-* *Bağımsızlığı (Dependency) azaltmak veya tamamen kaldırmak için standart kütüphaneleri kullanabilir miyiz?*
-* *Hata toleransını ve uptime süresini nasıl artırabiliriz?*
-* *Veri doğruluğunu artırmak için consensus (ortak akıl) mekanizmasını nasıl daha iyi optimize edebiliriz?*
+No matter what version the application is on, our ultimate target is to constantly provide:
+
+1. **Higher Performance:** Maximum efficiency in CPU usage and physical system resources.
+2. **Superior Uptime:** Uninterrupted service, exceptional fault tolerance, and resilience in any operational environment.
+3. **Accurate & Real Data:** Blending and reconciling data from diverse external weather sources to filter out anomalous errors and achieve optimal precision.
+4. **Blazing Speed:** Sub-millisecond initialization and processing times, fully utilizing optimized asynchronous network patterns.
+5. **Pruned Dependencies (Minimal Footprint):** Striking a careful balance by minimizing external crate dependencies to only core, active libraries (e.g. `tokio`, `ratatui`) to ensure a lightweight, secure, and easily maintainable codebase.
+6. **Optimized RAM Footprint:** Active memory management to completely prevent leaks and run with the lowest possible RAM footprint.
+7. **Premium Features:** Value-adding features that enrich the developer experience without sacrificing stability or performance.
+
+---
+
+## 🛡️ Adhering to the Principles
+
+For every new feature or refactoring task, we must continuously ask ourselves:
+* *Does this change increase CPU or RAM consumption unnecessarily?*
+* *Can we reduce our dependency tree by leveraging standard library features or lightweight built-ins?*
+* *How can we enhance error resilience and keep the system active in offline scenarios?*
+* *How can we refine the consensus-blending mechanism to improve the authenticity of the reported data?*

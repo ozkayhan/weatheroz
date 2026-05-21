@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct MetNorwayProvider;
@@ -75,7 +75,9 @@ fn symbol_code_to_wmo(symbol: &str) -> i32 {
         "lightrainshowersandthunder" | "rainshowersandthunder" | "heavyrainshowersandthunder" => 95,
         "lightsleetshowers" => 85,
         "sleetshowers" | "heavysleetshowers" => 86,
-        "lightsleetshowersandthunder" | "sleetshowersandthunder" | "heavysleetshowersandthunder" => 95,
+        "lightsleetshowersandthunder"
+        | "sleetshowersandthunder"
+        | "heavysleetshowersandthunder" => 95,
         "lightsnowshowers" => 85,
         "snowshowers" | "heavysnowshowers" => 86,
         "lightsnowshowersandthunder" | "snowshowersandthunder" | "heavysnowshowersandthunder" => 95,
@@ -96,7 +98,12 @@ fn symbol_code_to_wmo(symbol: &str) -> i32 {
 }
 
 impl MetNorwayProvider {
-    fn normalize(&self, raw_data: MetResponse, start_date: &str, end_date: &str) -> NormalizedWeatherData {
+    fn normalize(
+        &self,
+        raw_data: MetResponse,
+        start_date: &str,
+        end_date: &str,
+    ) -> NormalizedWeatherData {
         let mut points = Vec::new();
 
         if let Some(props) = raw_data.properties {
@@ -115,13 +122,16 @@ impl MetNorwayProvider {
                     None => continue,
                 };
 
-                let instant_details = data.instant.and_then(|i| i.details).unwrap_or(MetInstantDetails {
-                    air_temperature: None,
-                    relative_humidity: None,
-                    wind_speed: None,
-                    wind_from_direction: None,
-                    cloud_area_fraction: None,
-                });
+                let instant_details =
+                    data.instant
+                        .and_then(|i| i.details)
+                        .unwrap_or(MetInstantDetails {
+                            air_temperature: None,
+                            relative_humidity: None,
+                            wind_speed: None,
+                            wind_from_direction: None,
+                            cloud_area_fraction: None,
+                        });
 
                 let next_1 = data.next_1_hours.unwrap_or(MetNext1 {
                     details: None,
@@ -133,7 +143,10 @@ impl MetNorwayProvider {
                     probability_of_precipitation: None,
                 });
 
-                let symbol = next_1.summary.and_then(|s| s.symbol_code).unwrap_or_default();
+                let symbol = next_1
+                    .summary
+                    .and_then(|s| s.symbol_code)
+                    .unwrap_or_default();
                 let wmo_code = symbol_code_to_wmo(&symbol);
 
                 let temp = instant_details.air_temperature.unwrap_or(0.0);
@@ -187,7 +200,9 @@ impl BaseWeatherProvider for MetNorwayProvider {
             ctx.lat, ctx.lon
         );
 
-        let resp = ctx.client.get(&url)
+        let resp = ctx
+            .client
+            .get(&url)
             .header("User-Agent", "weather-cli/0.1.0 contact@example.com")
             .send()
             .await?;

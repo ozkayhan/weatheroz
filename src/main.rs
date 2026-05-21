@@ -1,20 +1,20 @@
-pub mod geocoding;
-pub mod tui;
-pub mod providers;
 pub mod cli;
-pub mod output;
-pub mod weather_cache;
+pub mod geocoding;
 pub mod orchestrator;
+pub mod output;
+pub mod providers;
 pub mod shared;
+pub mod tui;
+pub mod weather_cache;
 
-use clap::Parser;
-use std::sync::{Arc, Mutex};
-use std::io::IsTerminal;
 use chrono::{NaiveDate, Utc};
+use clap::Parser;
+use std::io::IsTerminal;
+use std::sync::{Arc, Mutex};
 
-use crate::cli::{Args, validate_date};
+use crate::cli::{validate_date, Args};
+use crate::output::{print_date_range_info, print_hourly_table, print_location_info};
 use crate::tui::ProcessState;
-use crate::output::{print_location_info, print_date_range_info, print_hourly_table};
 
 fn get_log_path() -> std::path::PathBuf {
     let mut path = if let Ok(home) = std::env::var("HOME") {
@@ -69,7 +69,6 @@ async fn main() {
     let log_path = get_log_path();
     let file = std::fs::OpenOptions::new()
         .create(true)
-        .write(true)
         .append(true)
         .open(&log_path);
 
@@ -85,19 +84,19 @@ async fn main() {
     let stderr_layer = if !use_tui {
         let filter = tracing_subscriber::EnvFilter::try_from_default_env()
             .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("off"));
-        Some(tracing_subscriber::fmt::layer()
-            .with_writer(std::io::stderr)
-            .with_filter(filter))
+        Some(
+            tracing_subscriber::fmt::layer()
+                .with_writer(std::io::stderr)
+                .with_filter(filter),
+        )
     } else {
         None
     };
 
-    let tui_layer = if let Some(ref st) = state {
-        Some(crate::tui::TuiLoggingLayer { state: st.clone() }
-            .with_filter(tracing_subscriber::filter::LevelFilter::INFO))
-    } else {
-        None
-    };
+    let tui_layer = state.as_ref().map(|st| {
+        crate::tui::TuiLoggingLayer { state: st.clone() }
+            .with_filter(tracing_subscriber::filter::LevelFilter::INFO)
+    });
 
     let _ = tracing_subscriber::registry()
         .with(file_layer)
@@ -118,22 +117,25 @@ async fn main() {
 
     if location_query.is_none() {
         if args.verbose {
-            println!("📡 Cihaz konumu IP üzerinden otomatik tespit ediliyor...");
+            println!("📡 Automatically detecting device location via IP...");
         }
         match crate::geocoding::resolve_ip_location(client.clone(), None, state.as_ref()).await {
             Ok(loc) => {
                 if args.verbose {
-                    println!("✅ IP konum tespiti başarılı: {}, {}", loc.name, loc.country);
+                    println!(
+                        "✅ IP location detection succeeded: {}, {}",
+                        loc.name, loc.country
+                    );
                 }
                 location_query = Some(loc.name.clone());
                 resolved_location = Some(loc);
             }
             Err(e) => {
                 if args.verbose {
-                    println!("⚠ IP konum tespiti başarısız: {}", e);
+                    println!("⚠ IP location detection failed: {}", e);
                 }
                 if std::io::stdin().is_terminal() {
-                    eprint!("Cihaz konumu otomatik tespit edilemedi. Lütfen bir konum girin: ");
+                    eprint!("Device location could not be automatically detected. Please enter a location: ");
                     let mut input = String::new();
                     if std::io::stdin().read_line(&mut input).is_ok() {
                         let trimmed = input.trim().to_string();
@@ -143,7 +145,7 @@ async fn main() {
                     }
                 }
                 if location_query.is_none() {
-                    crate::output::print_error_block("Cihaz konumu otomatik tespit edilemedi ve konum girilmedi.");
+                    crate::output::print_error_block("Device location could not be automatically detected, and no location was provided.");
                     std::process::exit(1);
                 }
             }
@@ -161,7 +163,9 @@ async fn main() {
     // 5. Verbose Geocoding Cache check output (TUI is inactive)
     if args.verbose && !use_tui && resolved_location.is_none() {
         let query_key = location_query.to_lowercase().trim().to_string();
-        let mut custom_path = std::env::var("WEATHER_OZ_CACHE_PATH").ok().map(std::path::PathBuf::from);
+        let mut custom_path = std::env::var("WEATHER_OZ_CACHE_PATH")
+            .ok()
+            .map(std::path::PathBuf::from);
         if custom_path.is_none() {
             if let Ok(home) = std::env::var("HOME") {
                 let mut path = std::path::PathBuf::from(home);
@@ -178,7 +182,8 @@ async fn main() {
                 if let Ok(content) = std::fs::read_to_string(path) {
                     if let Ok(cache) = serde_json::from_str::<serde_json::Value>(&content) {
                         if let Some(entry) = cache.get(&query_key) {
-                            if let Some(timestamp) = entry.get("timestamp").and_then(|t| t.as_f64()) {
+                            if let Some(timestamp) = entry.get("timestamp").and_then(|t| t.as_f64())
+                            {
                                 let now_secs = std::time::SystemTime::now()
                                     .duration_since(std::time::UNIX_EPOCH)
                                     .unwrap_or_default()
@@ -217,7 +222,8 @@ async fn main() {
                 location_query_clone,
                 resolved_location_clone,
                 Some(&state_clone),
-            ).await
+            )
+            .await
         });
 
         let mut stdout = std::io::stdout();
@@ -261,7 +267,9 @@ async fn main() {
 
             if let Ok(true) = crossterm::event::poll(std::time::Duration::from_millis(100)) {
                 if let Ok(crossterm::event::Event::Key(key)) = crossterm::event::read() {
-                    if key.code == crossterm::event::KeyCode::Char('q') || key.code == crossterm::event::KeyCode::Esc {
+                    if key.code == crossterm::event::KeyCode::Char('q')
+                        || key.code == crossterm::event::KeyCode::Esc
+                    {
                         exit_err = Some("User cancelled".to_string());
                         break;
                     }
@@ -290,7 +298,9 @@ async fn main() {
             location_query.clone(),
             resolved_location,
             None,
-        ).await {
+        )
+        .await
+        {
             Ok(res) => res,
             Err(e) => {
                 crate::output::print_error_block(&e.to_string());
@@ -302,33 +312,55 @@ async fn main() {
     // 7. Process Output
     if args.verbose && !use_tui {
         if result.winner_name == "Cache" && !result.is_offline {
-            println!("⚡ \x1b[1;32mWeather Cache Hit:\x1b[0m Loaded fresh weather data from cache.");
+            println!(
+                "⚡ \x1b[1;32mWeather Cache Hit:\x1b[0m Loaded fresh weather data from cache."
+            );
         } else if result.winner_name == "Cache" && result.is_offline {
-            println!("🔍 \x1b[1;33mWeather Cache Stale:\x1b[0m Cached data is older than 15 minutes.");
+            println!(
+                "🔍 \x1b[1;33mWeather Cache Stale:\x1b[0m Cached data is older than 15 minutes."
+            );
         } else {
             // It was a race! Print matching verbose outputs
             let today_obj = Utc::now().naive_utc().date();
             let s_date = NaiveDate::parse_from_str(&start_date, "%Y-%m-%d").unwrap();
             let mut eligible = vec!["Open-Meteo", "wttr.in"];
-            if !(s_date < today_obj) {
+            if s_date >= today_obj {
                 eligible.insert(1, "MET Norway");
             }
-            println!("🚀 \x1b[1;34mStarting parallel race for:\x1b[0m {}", eligible.join(", "));
-            
+            println!(
+                "🚀 \x1b[1;34mStarting parallel race for:\x1b[0m {}",
+                eligible.join(", ")
+            );
+
             println!("\n🏁 \x1b[1mThread Details:\x1b[0m");
             let mut keys: Vec<&String> = result.stats.keys().collect();
             keys.sort();
             for p_name in keys {
                 if let Some(p_stat) = result.stats.get(p_name) {
                     if p_stat.success {
-                        println!("  - {}: \x1b[32mSUCCESS\x1b[0m ({:.1}ms)", p_name, p_stat.time_ms);
+                        println!(
+                            "  - {}: \x1b[32mSUCCESS\x1b[0m ({:.1}ms)",
+                            p_name, p_stat.time_ms
+                        );
                     } else {
-                        println!("  - {}: \x1b[31mFAILED\x1b[0m ({:.1}ms) - {}", p_name, p_stat.time_ms, p_stat.error.as_deref().unwrap_or(""));
+                        println!(
+                            "  - {}: \x1b[31mFAILED\x1b[0m ({:.1}ms) - {}",
+                            p_name,
+                            p_stat.time_ms,
+                            p_stat.error.as_deref().unwrap_or("")
+                        );
                     }
                 }
             }
-            let winner_time = result.stats.get(&result.winner_name).map(|s| s.time_ms).unwrap_or(0.0);
-            println!("\n🏆 \x1b[1;33mWinner:\x1b[0m \x1b[1m{}\x1b[0m ({:.1}ms)\n", result.winner_name, winner_time);
+            let winner_time = result
+                .stats
+                .get(&result.winner_name)
+                .map(|s| s.time_ms)
+                .unwrap_or(0.0);
+            println!(
+                "\n🏆 \x1b[1;33mWinner:\x1b[0m \x1b[1m{}\x1b[0m ({:.1}ms)\n",
+                result.winner_name, winner_time
+            );
         }
     }
 

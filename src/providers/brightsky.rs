@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct BrightSkyProvider;
@@ -60,7 +60,13 @@ impl BaseWeatherProvider for BrightSkyProvider {
 
         if let Some(records) = raw.weather {
             for rec in records {
-                let time_formatted = rec.timestamp.replace('Z', "").split('+').next().unwrap_or("").to_string();
+                let time_formatted = rec
+                    .timestamp
+                    .replace('Z', "")
+                    .split('+')
+                    .next()
+                    .unwrap_or("")
+                    .to_string();
                 let temp = rec.temperature.unwrap_or(0.0);
                 let precip = rec.precipitation.unwrap_or(0.0);
                 let hum = rec.relative_humidity.unwrap_or(0.0);

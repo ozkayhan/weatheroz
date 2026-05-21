@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct WttrProvider;
@@ -81,7 +81,12 @@ fn wwo_code_to_wmo(wwo_code: i32) -> i32 {
 }
 
 impl WttrProvider {
-    fn normalize(&self, raw_data: WttrResponse, start_date: &str, end_date: &str) -> NormalizedWeatherData {
+    fn normalize(
+        &self,
+        raw_data: WttrResponse,
+        start_date: &str,
+        end_date: &str,
+    ) -> NormalizedWeatherData {
         let mut points = Vec::new();
 
         if let Some(days) = raw_data.weather {

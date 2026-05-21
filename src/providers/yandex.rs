@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::providers::base::{BaseWeatherProvider, FetchContext};
 use crate::providers::models::{HourlyPoint, NormalizedWeatherData};
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct YandexProvider;
@@ -23,8 +23,14 @@ struct YandexResponse {
 
 fn dir_to_degree(dir: &str) -> f64 {
     match dir {
-        "n" => 0.0, "ne" => 45.0, "e" => 90.0, "se" => 135.0,
-        "s" => 180.0, "sw" => 225.0, "w" => 270.0, "nw" => 315.0,
+        "n" => 0.0,
+        "ne" => 45.0,
+        "e" => 90.0,
+        "se" => 135.0,
+        "s" => 180.0,
+        "sw" => 225.0,
+        "w" => 270.0,
+        "nw" => 315.0,
         _ => 0.0,
     }
 }
@@ -54,7 +60,10 @@ impl BaseWeatherProvider for YandexProvider {
     ) -> Result<NormalizedWeatherData, Box<dyn std::error::Error + Send + Sync>> {
         let key = match ctx.api_keys.get("Yandex") {
             Some(k) => k,
-            None => return Err("Yandex API key is missing. Configure it in config.json or set WEATHER_KEY_YANDEX.".into()),
+            None => return Err(
+                "Yandex API key is missing. Configure it in config.json or set WEATHER_KEY_YANDEX."
+                    .into(),
+            ),
         };
 
         let url = format!(
@@ -62,7 +71,9 @@ impl BaseWeatherProvider for YandexProvider {
             ctx.lat, ctx.lon
         );
 
-        let resp = ctx.client.get(&url)
+        let resp = ctx
+            .client
+            .get(&url)
             .header("X-Yandex-API-Key", key)
             .send()
             .await?;
@@ -84,7 +95,8 @@ impl BaseWeatherProvider for YandexProvider {
             let wmo = condition_to_wmo(fact.condition.as_deref().unwrap_or(""));
 
             let today = chrono::Utc::now().naive_utc().date();
-            let start = chrono::NaiveDate::parse_from_str(ctx.start_date, "%Y-%m-%d").unwrap_or(today);
+            let start =
+                chrono::NaiveDate::parse_from_str(ctx.start_date, "%Y-%m-%d").unwrap_or(today);
             for h in 0..24 {
                 points.push(HourlyPoint {
                     time: format!("{}T{:02}:00:00", start.format("%Y-%m-%d"), h),

@@ -27,9 +27,30 @@ pub struct ProcessState {
 impl ProcessState {
     pub fn new(query: String) -> Self {
         let mut providers = HashMap::new();
-        providers.insert("Open-Meteo".to_string(), ProviderState { status: "pending".to_string(), time: None, error: None });
-        providers.insert("MET Norway".to_string(), ProviderState { status: "pending".to_string(), time: None, error: None });
-        providers.insert("wttr.in".to_string(), ProviderState { status: "pending".to_string(), time: None, error: None });
+        providers.insert(
+            "Open-Meteo".to_string(),
+            ProviderState {
+                status: "pending".to_string(),
+                time: None,
+                error: None,
+            },
+        );
+        providers.insert(
+            "MET Norway".to_string(),
+            ProviderState {
+                status: "pending".to_string(),
+                time: None,
+                error: None,
+            },
+        );
+        providers.insert(
+            "wttr.in".to_string(),
+            ProviderState {
+                status: "pending".to_string(),
+                time: None,
+                error: None,
+            },
+        );
 
         Self {
             query,
@@ -41,7 +62,7 @@ impl ProcessState {
             step_race: "pending".to_string(),
             step_blending: "pending".to_string(),
             providers,
-            last_log: "Süreç başlatılıyor...".to_string(),
+            last_log: "Starting process...".to_string(),
         }
     }
 }
@@ -91,4 +112,3 @@ where
         }
     }
 }
-

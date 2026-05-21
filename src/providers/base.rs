@@ -1,6 +1,6 @@
-use std::sync::Arc;
-use std::collections::HashMap;
 use crate::providers::models::NormalizedWeatherData;
+use std::collections::HashMap;
+use std::sync::Arc;
 
 pub struct FetchContext<'a> {
     pub client: Arc<reqwest::Client>,
