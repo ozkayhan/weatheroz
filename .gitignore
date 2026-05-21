@@ -1,0 +1,21 @@
+# Rust build artifacts
+/target
+
+# IDE settings
+.vscode/
+.idea/
+.omo/
+*.rs.bk
+
+# macOS system files
+.DS_Store
+**/.DS_Store
+
+# Local application caches & logs
+.cache/
+geo_cache.json
+weather_cache.json
+weather.log
+
+# Deprecated local documentation
+deprecated_docs/
