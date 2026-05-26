@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-05-26
+
+### Changed
+- **Unified Branding & Naming**: Standardized project name and command line binary to `weatheroz` across all configurations, build systems, caching directories (`~/.cache/weatheroz`), configuration directories (`~/.config/weatheroz`), environment variables (`WEATHEROZ_CACHE_PATH`, `WEATHEROZ_CONFIG_PATH`), help menus, example guides, and test suites.
+- **Language Localization**: Translated core operational principles (`principles.md`) from Turkish to English to ensure consistent global documentation.
+
 ## [0.1.0] - 2026-05-21
 
 ### Added

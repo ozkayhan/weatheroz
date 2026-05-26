@@ -29,7 +29,7 @@ pub struct CacheEntry {
 }
 
 fn get_cache_path() -> PathBuf {
-    if let Ok(custom_path) = std::env::var("WEATHER_OZ_CACHE_PATH") {
+    if let Ok(custom_path) = std::env::var("WEATHEROZ_CACHE_PATH") {
         return PathBuf::from(custom_path);
     }
     let mut path = if let Ok(home) = std::env::var("HOME") {
@@ -38,7 +38,7 @@ fn get_cache_path() -> PathBuf {
         PathBuf::from(".")
     };
     path.push(".cache");
-    path.push("weather_oz");
+    path.push("weatheroz");
     path.push("geo_cache.json");
     path
 }

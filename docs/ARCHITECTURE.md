@@ -1,6 +1,6 @@
 # System Architecture
 
-This document describes the high-level software architecture, data flow, and components of the Weather OZ & TUI application.
+This document describes the high-level software architecture, data flow, and components of the Weatheroz & TUI application.
 
 ---
 
@@ -40,7 +40,7 @@ To achieve peak performance and resilience, the orchestrator performs a parallel
 - **Resilience**: If all providers fail or if the system is completely offline, the orchestrator automatically intercepts the failure and falls back to loading the last saved weather state from cache.
 
 ### 2. Local Weather & Geocoding Caches (`src/weather_cache.rs`, `src/geocoding/`)
-- **Weather Cache**: Persists weather forecast arrays locally under `.cache/weather_oz/weather_cache.json` with a 15-minute validity window. Stale cache is refreshed, but kept as a fallback during network failures.
+- **Weather Cache**: Persists weather forecast arrays locally under `.cache/weatheroz/weather_cache.json` with a 15-minute validity window. Stale cache is refreshed, but kept as a fallback during network failures.
 - **Geocoding Cache**: Resolves and maps location search queries (like "London") to GPS coordinates. Resolving coordinates is cached for up to 30 days (`geo_cache.json`) to bypass redundant geocoding API queries.
 - **IP Detection**: When location is omitted, the IP geocoder contacts an external API to resolve the device's current public IP to a geographical city.
 

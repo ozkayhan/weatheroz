@@ -1,4 +1,4 @@
-# Contributing to Weather OZ & TUI
+# Contributing to Weatheroz
 
 First off, thank you for taking the time to contribute! Contributions from the community help make this tool faster, more robust, and more delightful to use.
 

@@ -682,4 +682,288 @@ mod tests {
         assert_eq!(weather_data.provider_name, "Mock-Fast-2");
         assert!(stats.contains_key("Mock-Fast-2"));
     }
+
+    #[test]
+    fn test_blend_weather_data_mathematical_invariants() {
+        let pt1 = HourlyPoint {
+            time: "2026-05-21T12:00:00Z".to_string(),
+            temperature: 20.0,
+            apparent_temperature: 18.0,
+            precipitation_probability: 10.0,
+            precipitation: 0.2,
+            humidity: 60.0,
+            wind_speed: 10.0,
+            wind_direction: 180.0,
+            cloud_cover: 30.0,
+            weather_code: 3,
+            aqi: None,
+            uv_index: Some(5.0),
+            is_day: Some(true),
+            visibility: Some(10000.0),
+            soil_temperature: Some(15.0),
+            soil_moisture: Some(0.3),
+        };
+
+        let pt2 = HourlyPoint {
+            time: "2026-05-21T12:00:00Z".to_string(),
+            temperature: 22.0,
+            apparent_temperature: 21.0,
+            precipitation_probability: 20.0,
+            precipitation: 0.4,
+            humidity: 70.0,
+            wind_speed: 14.0,
+            wind_direction: 200.0,
+            cloud_cover: 50.0,
+            weather_code: 3,
+            aqi: None,
+            uv_index: Some(7.0),
+            is_day: Some(true),
+            visibility: Some(8000.0),
+            soil_temperature: Some(17.0),
+            soil_moisture: Some(0.4),
+        };
+
+        let data1 = NormalizedWeatherData {
+            provider_name: "P1".to_string(),
+            hourly: vec![pt1],
+        };
+        let data2 = NormalizedWeatherData {
+            provider_name: "P2".to_string(),
+            hourly: vec![pt2],
+        };
+
+        let successful = vec![
+            ("P1".to_string(), data1, 10.0),
+            ("P2".to_string(), data2, 20.0),
+        ];
+
+        let (blended, name) = blend_weather_data(successful);
+
+        assert!(name.contains("Consensus Blended"));
+        assert!(name.contains("P1"));
+        assert!(name.contains("P2"));
+        assert_eq!(blended.hourly.len(), 1);
+
+        let blended_pt = &blended.hourly[0];
+        assert!((blended_pt.temperature - 21.0).abs() < 1e-6);
+        assert!((blended_pt.apparent_temperature - 19.5).abs() < 1e-6);
+        assert!((blended_pt.precipitation_probability - 15.0).abs() < 1e-6);
+        assert!((blended_pt.precipitation - 0.3).abs() < 1e-6);
+        assert!((blended_pt.humidity - 65.0).abs() < 1e-6);
+        assert!((blended_pt.wind_speed - 12.0).abs() < 1e-6);
+        assert!((blended_pt.wind_direction - 190.0).abs() < 1e-6);
+        assert!((blended_pt.cloud_cover - 40.0).abs() < 1e-6);
+        assert_eq!(blended_pt.weather_code, 3);
+        assert!((blended_pt.uv_index.unwrap() - 6.0).abs() < 1e-6);
+        assert_eq!(blended_pt.is_day, Some(true));
+        assert!((blended_pt.visibility.unwrap() - 9000.0).abs() < 1e-6);
+        assert!((blended_pt.soil_temperature.unwrap() - 16.0).abs() < 1e-6);
+        assert!((blended_pt.soil_moisture.unwrap() - 0.35).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_blend_weather_data_majority_vote_weather_codes() {
+        let make_data = |code: i32| NormalizedWeatherData {
+            provider_name: format!("P-Code-{}", code),
+            hourly: vec![HourlyPoint {
+                time: "2026-05-21T12:00:00Z".to_string(),
+                temperature: 20.0,
+                apparent_temperature: 20.0,
+                precipitation_probability: 0.0,
+                precipitation: 0.0,
+                humidity: 50.0,
+                wind_speed: 10.0,
+                wind_direction: 0.0,
+                cloud_cover: 0.0,
+                weather_code: code,
+                aqi: None,
+                uv_index: None,
+                is_day: None,
+                visibility: None,
+                soil_temperature: None,
+                soil_moisture: None,
+            }],
+        };
+
+        // Case A: 3, 3, 5 -> blended should be 3
+        let successful_a = vec![
+            ("P1".to_string(), make_data(3), 10.0),
+            ("P2".to_string(), make_data(3), 20.0),
+            ("P3".to_string(), make_data(5), 30.0),
+        ];
+        let (blended_a, _) = blend_weather_data(successful_a);
+        assert_eq!(blended_a.hourly[0].weather_code, 3);
+
+        // Case B: 1, 2, 3 (tie, all single votes) -> blended code should stably be one of them (e.g. 1, 2, or 3)
+        let successful_b = vec![
+            ("P1".to_string(), make_data(1), 10.0),
+            ("P2".to_string(), make_data(2), 20.0),
+            ("P3".to_string(), make_data(3), 30.0),
+        ];
+        let (blended_b, _) = blend_weather_data(successful_b);
+        let picked = blended_b.hourly[0].weather_code;
+        assert!(picked == 1 || picked == 2 || picked == 3);
+    }
+
+    #[test]
+    fn test_blend_weather_data_optional_aqi() {
+        let pt1 = HourlyPoint {
+            time: "2026-05-21T12:00:00Z".to_string(),
+            temperature: 20.0,
+            apparent_temperature: 20.0,
+            precipitation_probability: 0.0,
+            precipitation: 0.0,
+            humidity: 50.0,
+            wind_speed: 10.0,
+            wind_direction: 0.0,
+            cloud_cover: 0.0,
+            weather_code: 0,
+            aqi: Some(AQIData {
+                co: Some(1.0),
+                no2: Some(2.0),
+                o3: Some(3.0),
+                so2: Some(4.0),
+                pm2_5: Some(5.0),
+                pm10: Some(6.0),
+            }),
+            uv_index: None,
+            is_day: None,
+            visibility: None,
+            soil_temperature: None,
+            soil_moisture: None,
+        };
+
+        let pt2 = HourlyPoint {
+            time: "2026-05-21T12:00:00Z".to_string(),
+            temperature: 20.0,
+            apparent_temperature: 20.0,
+            precipitation_probability: 0.0,
+            precipitation: 0.0,
+            humidity: 50.0,
+            wind_speed: 10.0,
+            wind_direction: 0.0,
+            cloud_cover: 0.0,
+            weather_code: 0,
+            aqi: Some(AQIData {
+                co: Some(3.0),
+                no2: Some(4.0),
+                o3: Some(5.0),
+                so2: Some(6.0),
+                pm2_5: Some(7.0),
+                pm10: Some(8.0),
+            }),
+            uv_index: None,
+            is_day: None,
+            visibility: None,
+            soil_temperature: None,
+            soil_moisture: None,
+        };
+
+        let data1 = NormalizedWeatherData {
+            provider_name: "P1".to_string(),
+            hourly: vec![pt1],
+        };
+        let data2 = NormalizedWeatherData {
+            provider_name: "P2".to_string(),
+            hourly: vec![pt2],
+        };
+
+        let successful = vec![
+            ("P1".to_string(), data1, 10.0),
+            ("P2".to_string(), data2, 20.0),
+        ];
+
+        let (blended, _) = blend_weather_data(successful);
+        let blended_aqi = blended.hourly[0].aqi.as_ref().unwrap();
+
+        assert_eq!(blended_aqi.co, Some(2.0)); // (1 + 3) / 2
+        assert_eq!(blended_aqi.no2, Some(3.0));
+        assert_eq!(blended_aqi.o3, Some(4.0));
+        assert_eq!(blended_aqi.so2, Some(5.0));
+        assert_eq!(blended_aqi.pm2_5, Some(6.0));
+        assert_eq!(blended_aqi.pm10, Some(7.0));
+    }
+
+    #[test]
+    fn test_blend_weather_data_is_day_consensus() {
+        let make_day_data = |is_day: Option<bool>| NormalizedWeatherData {
+            provider_name: "P".to_string(),
+            hourly: vec![HourlyPoint {
+                time: "2026-05-21T12:00:00Z".to_string(),
+                temperature: 20.0,
+                apparent_temperature: 20.0,
+                precipitation_probability: 0.0,
+                precipitation: 0.0,
+                humidity: 50.0,
+                wind_speed: 10.0,
+                wind_direction: 0.0,
+                cloud_cover: 0.0,
+                weather_code: 0,
+                aqi: None,
+                uv_index: None,
+                is_day,
+                visibility: None,
+                soil_temperature: None,
+                soil_moisture: None,
+            }],
+        };
+
+        // true, true, false -> blended should be true
+        let successful = vec![
+            ("P1".to_string(), make_day_data(Some(true)), 10.0),
+            ("P2".to_string(), make_day_data(Some(true)), 20.0),
+            ("P3".to_string(), make_day_data(Some(false)), 30.0),
+        ];
+        let (blended, _) = blend_weather_data(successful);
+        assert_eq!(blended.hourly[0].is_day, Some(true));
+
+        // false, false, true -> blended should be false
+        let successful_night = vec![
+            ("P1".to_string(), make_day_data(Some(false)), 10.0),
+            ("P2".to_string(), make_day_data(Some(false)), 20.0),
+            ("P3".to_string(), make_day_data(Some(true)), 30.0),
+        ];
+        let (blended_night, _) = blend_weather_data(successful_night);
+        assert_eq!(blended_night.hourly[0].is_day, Some(false));
+    }
+
+    #[test]
+    fn test_blend_weather_data_empty_input() {
+        let (blended, name) = blend_weather_data(vec![]);
+        assert_eq!(name, "Empty");
+        assert_eq!(blended.provider_name, "Empty");
+        assert!(blended.hourly.is_empty());
+    }
+
+    #[test]
+    fn test_blend_weather_data_single_input() {
+        let pt = HourlyPoint {
+            time: "2026-05-21T12:00:00Z".to_string(),
+            temperature: 24.5,
+            apparent_temperature: 25.0,
+            precipitation_probability: 5.0,
+            precipitation: 0.0,
+            humidity: 45.0,
+            wind_speed: 15.0,
+            wind_direction: 270.0,
+            cloud_cover: 10.0,
+            weather_code: 1,
+            aqi: None,
+            uv_index: None,
+            is_day: None,
+            visibility: None,
+            soil_temperature: None,
+            soil_moisture: None,
+        };
+        let data = NormalizedWeatherData {
+            provider_name: "SoloProvider".to_string(),
+            hourly: vec![pt],
+        };
+
+        let (blended, name) = blend_weather_data(vec![("SoloProvider".to_string(), data, 15.0)]);
+        assert_eq!(name, "SoloProvider");
+        assert_eq!(blended.provider_name, "SoloProvider");
+        assert_eq!(blended.hourly.len(), 1);
+        assert_eq!(blended.hourly[0].temperature, 24.5);
+    }
 }

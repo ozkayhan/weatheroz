@@ -707,7 +707,7 @@ pub fn render_mode(
                 PathBuf::from(".")
             };
             path.push(".cache");
-            path.push("weather_oz");
+            path.push("weatheroz");
             let _ = std::fs::create_dir_all(&path);
             path.push("preview.html");
 
@@ -757,7 +757,7 @@ fn get_sparkline(temps: &[f64]) -> String {
 
 pub fn print_error_block(error_msg: &str) {
     let mut suggestion =
-        "Please double check your command arguments or run 'weather --help' for details."
+        "Please double check your command arguments or run 'weatheroz --help' for details."
             .to_string();
 
     // Automatically match common errors to provide exceptionally helpful recommendations
@@ -770,7 +770,7 @@ pub fn print_error_block(error_msg: &str) {
         || lower.contains("no geocoding results")
         || lower.contains("girilmedi")
     {
-        suggestion = "The automatic geocoding system could not identify your location. Provide a city name directly. Example: 'weather Istanbul'".to_string();
+        suggestion = "The automatic geocoding system could not identify your location. Provide a city name directly. Example: 'weatheroz Istanbul'".to_string();
     } else if lower.contains("offline")
         || lower.contains("dns error")
         || lower.contains("connect")
@@ -779,7 +779,7 @@ pub fn print_error_block(error_msg: &str) {
     {
         suggestion = "An internet connection error occurred. Check your network or run without network-dependent flags.".to_string();
     } else if lower.contains("api key") || lower.contains("unauthorized") {
-        suggestion = "An API key issue was encountered. Verify your configuration in '~/.config/weather_oz/config.json' or set the appropriate environment variables.".to_string();
+        suggestion = "An API key issue was encountered. Verify your configuration in '~/.config/weatheroz/config.json' or set the appropriate environment variables.".to_string();
     }
 
     let err_line = format!("🚨 ERROR: {}", error_msg);

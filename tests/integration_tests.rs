@@ -2,10 +2,10 @@ use std::process::Command;
 
 #[tokio::test]
 async fn test_cli_normal_output() {
-    let output = Command::new("./target/debug/weather_oz")
+    let output = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -21,11 +21,11 @@ async fn test_cli_normal_output() {
 
 #[tokio::test]
 async fn test_cli_json_output() {
-    let output = Command::new("./target/debug/weather_oz")
+    let output = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .arg("--json-output")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -46,12 +46,12 @@ async fn test_cli_verbose_mode() {
     let temp_cache = cache_dir.join("temp_verbose_geo_cache.json");
     let weather_cache = cache_dir.join("weather_cache.json");
 
-    let output = Command::new("./target/debug/weather_oz")
-        .env("WEATHER_OZ_CACHE_PATH", temp_cache.to_str().unwrap())
+    let output = Command::new("./target/debug/weatheroz")
+        .env("WEATHEROZ_CACHE_PATH", temp_cache.to_str().unwrap())
         .arg("istanbul")
         .arg("--verbose")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -69,11 +69,11 @@ async fn test_cli_verbose_mode() {
 
 #[tokio::test]
 async fn test_cli_date_validation() {
-    let output = Command::new("./target/debug/weather_oz")
+    let output = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .arg("--from-date=2026-13-01")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Date must be in YYYY-MM-DD format") || stdout.contains("Error:"));
@@ -89,12 +89,12 @@ async fn test_cli_all_hours_flag() {
         .format("%Y-%m-%d")
         .to_string();
 
-    let output_without = Command::new("./target/debug/weather_oz")
+    let output_without = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .arg(format!("--from-date={}", tomorrow))
         .arg(format!("--to-date={}", day_after))
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout_without = String::from_utf8_lossy(&output_without.stdout);
     let stderr_without = String::from_utf8_lossy(&output_without.stderr);
@@ -102,13 +102,13 @@ async fn test_cli_all_hours_flag() {
         panic!("test_cli_all_hours_flag (without --all-hours) failed.\nStatus: {:?}\nStdout: {}\nStderr: {}", output_without.status, stdout_without, stderr_without);
     }
 
-    let output_with = Command::new("./target/debug/weather_oz")
+    let output_with = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .arg(format!("--from-date={}", tomorrow))
         .arg(format!("--to-date={}", day_after))
         .arg("--all-hours")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout_with = String::from_utf8_lossy(&output_with.stdout);
     let stderr_with = String::from_utf8_lossy(&output_with.stderr);
@@ -119,12 +119,12 @@ async fn test_cli_all_hours_flag() {
 
 #[tokio::test]
 async fn test_cli_historical_date() {
-    let output = Command::new("./target/debug/weather_oz")
+    let output = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .arg("--from-date=2025-01-01")
         .arg("--to-date=2025-01-01")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(output.status.success());
@@ -133,12 +133,12 @@ async fn test_cli_historical_date() {
 
 #[tokio::test]
 async fn test_cli_mixed_date_range() {
-    let output = Command::new("./target/debug/weather_oz")
+    let output = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .arg("--from-date=2025-01-01")
         .arg("--to-date=2026-06-01")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(output.status.success());
@@ -147,10 +147,10 @@ async fn test_cli_mixed_date_range() {
 
 #[tokio::test]
 async fn test_cli_invalid_location() {
-    let output = Command::new("./target/debug/weather_oz")
+    let output = Command::new("./target/debug/weatheroz")
         .arg("Xyzzzzz")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Location not found"));
@@ -173,12 +173,12 @@ async fn test_cli_cache_hit() {
     );
     std::fs::write(&cache_path, cache_content).unwrap();
 
-    let output = Command::new("./target/debug/weather_oz")
-        .env("WEATHER_OZ_CACHE_PATH", cache_path.to_str().unwrap())
+    let output = Command::new("./target/debug/weatheroz")
+        .env("WEATHEROZ_CACHE_PATH", cache_path.to_str().unwrap())
         .arg("istanbul")
         .arg("--verbose")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(output.status.success());
@@ -190,10 +190,10 @@ async fn test_cli_cache_hit() {
 
 #[tokio::test]
 async fn test_cli_cache_miss() {
-    let output = Command::new("./target/debug/weather_oz")
+    let output = Command::new("./target/debug/weatheroz")
         .arg("nonexistentcity12345")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Location not found"));
@@ -202,11 +202,11 @@ async fn test_cli_cache_miss() {
 
 #[tokio::test]
 async fn test_tui_dashboard() {
-    let output = Command::new("./target/debug/weather_oz")
+    let output = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .arg("--json-output")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     assert!(output.status.success());
 }

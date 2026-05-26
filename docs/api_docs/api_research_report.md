@@ -1,9 +1,9 @@
-# Weather OZ Sprint 2 - API Research Report
+# Weatheroz Sprint 2 - API Research Report
 
 This report documents the research, capabilities, authentication methods, limitations, and geolocal features of all 30 weather API providers integrated during Sprint 2.
 
 ## Executive Summary
-Weather APIs exhibit high variance in latency, billing models, historical ranges, variables offered, and reliability. To establish maximum uptime, the Weather OZ uses a **parallel racing model** with multi-tier execution, dynamic API key validation, and automatic geocoding filters.
+Weather APIs exhibit high variance in latency, billing models, historical ranges, variables offered, and reliability. To establish maximum uptime, the Weatheroz uses a **parallel racing model** with multi-tier execution, dynamic API key validation, and automatic geocoding filters.
 
 The integrated stack comprises:
 - **9 Open & Keyless Providers** (zero authentication, high-performance open telemetry)
@@ -68,7 +68,7 @@ These providers require zero registration, offering an instant fallback and prim
 
 ## 2. Keyed Providers (API Key Authorization Required)
 
-These services are bypassed during races if the corresponding key is missing from `~/.config/weather_oz/config.json` or the environment variables, ensuring zero race disruptions.
+These services are bypassed during races if the corresponding key is missing from `~/.config/weatheroz/config.json` or the environment variables, ensuring zero race disruptions.
 
 ### 2.1 OpenWeatherMap
 - **API URL:** `https://api.openweathermap.org/data/2.5/onecall` or `/weather`

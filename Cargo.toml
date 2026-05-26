@@ -1,5 +1,5 @@
 [package]
-name = "weather_oz"
+name = "weatheroz"
 version = "0.1.0"
 edition = "2021"
 description = "A high-performance parallel weather CLI and TUI application written in Rust."

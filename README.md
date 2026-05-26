@@ -1,4 +1,4 @@
-# 🌤️ Weather OZ & TUI Dashboard
+# 🌤️ Weatheroz & TUI Dashboard
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
@@ -39,7 +39,7 @@ cd weather
 cargo build --release
 ```
 
-The compiled binary will be available at `./target/release/weather_oz`.
+The compiled binary will be available at `./target/release/weatheroz`.
 
 ---
 
@@ -48,7 +48,7 @@ The compiled binary will be available at `./target/release/weather_oz`.
 ### 1. Interactive TUI Mode (Default)
 Run without disabling terminals to open the immersive interactive dashboard:
 ```bash
-./target/release/weather_oz
+./target/release/weatheroz
 ```
 * **Controls**: Press `q` or `Esc` to safely exit the Alternate Screen.
 * Automatically triggers geocoding, starts parallel requests, and draws a layout featuring current temperature, wind speed, precipitation, and live logs.
@@ -56,19 +56,19 @@ Run without disabling terminals to open the immersive interactive dashboard:
 ### 2. Standard CLI Mode
 Request weather for a specific city:
 ```bash
-./target/release/weather_oz --location "Istanbul"
+./target/release/weatheroz --location "Istanbul"
 ```
 
 ### 3. Date-Range Historical and Forecast Queries
 Query specific historical or future date ranges:
 ```bash
-./target/release/weather_oz --location "London" --from-date 2026-05-20 --to-date 2026-05-22
+./target/release/weatheroz --location "London" --from-date 2026-05-20 --to-date 2026-05-22
 ```
 
 ### 4. Verbose & Parallel Performance Tracing
 See the results of the parallel provider race and cache hits/misses in real time:
 ```bash
-./target/release/weather_oz --location "New York" --verbose
+./target/release/weatheroz --location "New York" --verbose
 ```
 *Output snippet:*
 ```
@@ -86,7 +86,7 @@ See the results of the parallel provider race and cache hits/misses in real time
 ### 5. Automated JSON Integrations
 Output machine-readable raw JSON data:
 ```bash
-./target/release/weather_oz --location "Tokyo" --json-output
+./target/release/weatheroz --location "Tokyo" --json-output
 ```
 
 ---

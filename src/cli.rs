@@ -12,10 +12,10 @@ pub fn get_styles() -> Styles {
 
 #[derive(Parser, Debug, Clone)]
 #[command(
-    name = "weather",
-    about = "☀️  Weather OZ tool - Get weather information for any location with caching and parallel provider race.",
+    name = "weatheroz",
+    about = "☀️  Weatheroz tool - Get weather information for any location with caching and parallel provider race.",
     styles = get_styles(),
-    after_help = "EXAMPLES:\n  weather Istanbul\n  weather Berlin --days 3\n  weather Tokyo -m sparkline\n  weather \"Central Park, NY\" --enrich --mode html-preview"
+    after_help = "EXAMPLES:\n  weatheroz Istanbul\n  weatheroz Berlin --days 3\n  weatheroz Tokyo -m sparkline\n  weatheroz \"Central Park, NY\" --enrich --mode html-preview"
 )]
 pub struct Args {
     #[arg(

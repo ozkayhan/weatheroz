@@ -2,8 +2,8 @@
 
 use std::sync::Mutex;
 use std::time::SystemTime;
-use weather_oz::providers::models::{HourlyPoint, NormalizedWeatherData};
-use weather_oz::weather_cache::{get_cached_weather, save_cached_weather};
+use weatheroz::providers::models::{HourlyPoint, NormalizedWeatherData};
+use weatheroz::weather_cache::{get_cached_weather, save_cached_weather};
 
 static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
@@ -14,7 +14,7 @@ async fn test_weather_cache_save_and_retrieve_fresh() {
     let cache_dir = std::env::temp_dir().join("test_weather_cache_fresh_dir");
     let _ = std::fs::create_dir_all(&cache_dir);
     let cache_path = cache_dir.join("geo_cache.json");
-    std::env::set_var("WEATHER_OZ_CACHE_PATH", cache_path.to_str().unwrap());
+    std::env::set_var("WEATHEROZ_CACHE_PATH", cache_path.to_str().unwrap());
 
     // Clean up
     let _ = std::fs::remove_file(&cache_path);
@@ -54,7 +54,7 @@ async fn test_weather_cache_save_and_retrieve_fresh() {
     let _ = std::fs::remove_file(&cache_path);
     let _ = std::fs::remove_file(cache_dir.join("weather_cache.json"));
     let _ = std::fs::remove_dir(&cache_dir);
-    std::env::remove_var("WEATHER_OZ_CACHE_PATH");
+    std::env::remove_var("WEATHEROZ_CACHE_PATH");
 }
 
 #[tokio::test]
@@ -64,7 +64,7 @@ async fn test_weather_cache_stale() {
     let cache_dir = std::env::temp_dir().join("test_weather_cache_stale_dir");
     let _ = std::fs::create_dir_all(&cache_dir);
     let cache_path = cache_dir.join("weather_cache.json");
-    std::env::set_var("WEATHER_OZ_CACHE_PATH", cache_dir.to_str().unwrap());
+    std::env::set_var("WEATHEROZ_CACHE_PATH", cache_dir.to_str().unwrap());
 
     // Clean up
     let _ = std::fs::remove_file(&cache_path);
@@ -113,7 +113,7 @@ async fn test_weather_cache_stale() {
 
     let _ = std::fs::remove_file(&cache_path);
     let _ = std::fs::remove_dir(&cache_dir);
-    std::env::remove_var("WEATHER_OZ_CACHE_PATH");
+    std::env::remove_var("WEATHEROZ_CACHE_PATH");
 }
 
 #[test]
@@ -150,15 +150,15 @@ fn test_cli_weather_cache_hit() {
     );
     std::fs::write(&weather_cache_path, weather_cache_content).unwrap();
 
-    // Run weather_oz in verbose mode
-    let output = std::process::Command::new("./target/debug/weather_oz")
-        .env("WEATHER_OZ_CACHE_PATH", geo_cache_path.to_str().unwrap())
+    // Run weatheroz in verbose mode
+    let output = std::process::Command::new("./target/debug/weatheroz")
+        .env("WEATHEROZ_CACHE_PATH", geo_cache_path.to_str().unwrap())
         .arg("cachecity")
         .arg("--verbose")
         .arg("-d")
         .arg("1")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -210,15 +210,15 @@ fn test_cli_offline_fallback() {
     );
     std::fs::write(&weather_cache_path, weather_cache_content).unwrap();
 
-    // Run weather_oz in verbose mode
-    let output = std::process::Command::new("./target/debug/weather_oz")
-        .env("WEATHER_OZ_CACHE_PATH", geo_cache_path.to_str().unwrap())
+    // Run weatheroz in verbose mode
+    let output = std::process::Command::new("./target/debug/weatheroz")
+        .env("WEATHEROZ_CACHE_PATH", geo_cache_path.to_str().unwrap())
         .arg("offlinecity")
         .arg("--verbose")
         .arg("-d")
         .arg("1")
         .output()
-        .expect("Failed to execute weather_oz");
+        .expect("Failed to execute weatheroz");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);

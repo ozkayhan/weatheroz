@@ -1,6 +1,6 @@
 # Production Deployment Guide
 
-This document describes how to compile, optimize, package, and distribute the Weather OZ & TUI binary for production usage.
+This document describes how to compile, optimize, package, and distribute the Weatheroz & TUI binary for production usage.
 
 ---
 
@@ -12,7 +12,7 @@ To compile the application with full optimizations, use Cargo's release profile:
 cargo build --release
 ```
 
-The resulting optimized executable will be generated at `target/release/weather_oz`.
+The resulting optimized executable will be generated at `target/release/weatheroz`.
 
 ---
 
@@ -57,9 +57,9 @@ cargo build --release --target x86_64-apple-darwin
 
 # Combine into a single fat binary using lipo
 lipo -create \
-  target/aarch64-apple-darwin/release/weather_oz \
-  target/x86_64-apple-darwin/release/weather_oz \
-  -output target/release/weather_oz_universal
+  target/aarch64-apple-darwin/release/weatheroz \
+  target/x86_64-apple-darwin/release/weatheroz \
+  -output target/release/weatheroz_universal
 ```
 
 ---
@@ -68,10 +68,10 @@ lipo -create \
 
 At runtime, the binary manages three main locations:
 1. **Cache Folder**:
-   - Resolved coordinates and local forecasts are kept in `~/.cache/weather_oz/`.
+   - Resolved coordinates and local forecasts are kept in `~/.cache/weatheroz/`.
    - Ensure the user running the application has read/write permission to their `$HOME` directory.
 2. **Log File**:
-   - Live system events are appended to `~/.cache/weather_oz/weather.log`.
+   - Live system events are appended to `~/.cache/weatheroz/weather.log`.
    - In production, you can set up `logrotate` to periodically compress or delete old log lines.
 3. **Configuration file**:
    - Looks for an option configuration file in a standard standard JSON config service.
