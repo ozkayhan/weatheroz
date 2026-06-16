@@ -554,6 +554,9 @@ pub fn render_mode(
             if let Some(vis) = current.visibility {
                 println!("- **Visibility**: {:.1} km", vis);
             }
+            if let Some(st) = current.soil_temperature {
+                println!("- **Soil Temp**: {:.1}°C", st);
+            }
             println!();
         }
 

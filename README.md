@@ -10,14 +10,14 @@ A blazing-fast, concurrent CLI and interactive TUI application written in Rust. 
 
 ## 🚀 Key Features
 
-* **🏎️ Parallel Race Orchestrator**: Fetches weather forecasts concurrently from multiple API providers (**Open-Meteo**, **MET Norway**, and **wttr.in**). The fastest successful response wins the race!
+* **🏎️ Parallel Race Orchestrator**: Fetches weather forecasts concurrently from **18 real HTTP providers** (Open-Meteo, MET Norway, wttr.in, Bright Sky, SMHI, FMI, NWS, Meteostat, Environment Canada, OpenWeatherMap, WeatherAPI, Weatherbit, Tomorrow.io, Visual Crossing, WeatherStack, Yandex, AccuWeather, Pirate Weather). The fastest successful response wins the race! Note: Open-Meteo already blends dozens of upstream models (DWD, NOAA/GFS, ECMWF, JMA, MET Norway, GEM…) internally, so a single winner can itself be a multi-model consensus.
 * **🖥️ Interactive TUI Dashboard**: A gorgeous terminal user interface powered by `ratatui` and `crossterm`. Features real-time state visualization, asynchronous fetch updates, and a dedicated in-TUI logging panel displaying tracing logs.
 * **📦 Smart Cache & Offline Mode**: 
   - **Weather Cache**: Persists data locally to minimize API hits. Stale data (older than 15 mins) automatically triggers a refresh, but acts as a resilient fallback in offline/network-failure modes.
   - **Geocoding Cache**: Remembers coordinates for locations for up to 30 days, avoiding redundant network lookups.
 * **📡 Intelligent Location Resolution**: Automatically resolves location using **IP Geolocation** for auto-detection, CLI arguments, or manual fallback input.
-* **📊 Comprehensive Layouts**: 
-  - Beautiful tabular representation using `comfy-table`.
+* **📊 10 Visual Output Modes**: 
+  - `default` (table), `compact` (ASCII card), `inline` (status bar), `json`, `emoji`, `ascii-banner`, `sparkline` (24h trend), `bordered-card`, `markdown`, `html-preview` (browser)
   - Machine-readable JSON output for automated integrations.
   - Flexibly display 24-hour standard projections or full 168-hour weekly reports (`--all-hours`).
 
@@ -46,47 +46,56 @@ The compiled binary will be available at `./target/release/weather_oz`.
 ## Usage
 
 ### 1. Interactive TUI Mode (Default)
-Run without disabling terminals to open the immersive interactive dashboard:
+Run without arguments to open the immersive interactive dashboard:
 ```bash
 ./target/release/weather_oz
 ```
-* **Controls**: Press `q` or `Esc` to safely exit the Alternate Screen.
+* **Controls**: Press `q` or `Esc` to safely exit.
 * Automatically triggers geocoding, starts parallel requests, and draws a layout featuring current temperature, wind speed, precipitation, and live logs.
 
 ### 2. Standard CLI Mode
 Request weather for a specific city:
 ```bash
-./target/release/weather_oz --location "Istanbul"
+./target/release/weather_oz Istanbul
 ```
 
-### 3. Date-Range Historical and Forecast Queries
+### 3. Core CLI Flags
+- **Location**: positional argument (accepts multiple words, e.g., `"Central Park, NY"`)
+- `-m, --mode <MODE>`: Visual output mode (`default`, `compact`, `inline`, `json`, `emoji`, `ascii-banner`, `sparkline`, `bordered-card`, `markdown`, `html-preview`)
+- `-f, --from-date <YYYY-MM-DD>`: Start date for queries (default: today)
+- `-t, --to-date <YYYY-MM-DD>`: End date for queries (default: today)
+- `-d, --days <N>`: Forecast days (up to 40)
+- `-e, --enrich`: Enable data enrichment (soil metrics, visibility, UV index, AQI)
+- `-a, --all-hours`: Show 168 hours instead of 24
+- `-j, --json-output`: Output JSON (shortcut for `-m json`)
+- `-v, --verbose`: Show detailed performance logs and race timings
+- `--minute`: Request minute-by-minute updates (where supported)
+- `--cache-ttl <MINUTES>`: Override cache TTL (0 = disable cache)
+
+### 4. Date-Range Historical and Forecast Queries
 Query specific historical or future date ranges:
 ```bash
-./target/release/weather_oz --location "London" --from-date 2026-05-20 --to-date 2026-05-22
+./target/release/weather_oz London --from-date 2026-05-20 --to-date 2026-05-22
 ```
 
-### 4. Verbose & Parallel Performance Tracing
-See the results of the parallel provider race and cache hits/misses in real time:
+### 5. Verbose & Parallel Performance Tracing
+See the results of the parallel provider race in real time:
 ```bash
-./target/release/weather_oz --location "New York" --verbose
-```
-*Output snippet:*
-```
-🔍 Cache Miss: New York
-🚀 Starting parallel race for: Open-Meteo, MET Norway, wttr.in
-
-🏁 Thread Details:
-  - MET Norway: SUCCESS (124.5ms)
-  - Open-Meteo: SUCCESS (89.2ms)
-  - wttr.in: SUCCESS (210.4ms)
-
-🏆 Winner: Open-Meteo (89.2ms)
+./target/release/weather_oz "New York" --verbose
 ```
 
-### 5. Automated JSON Integrations
+### 6. Automated JSON Integrations
 Output machine-readable raw JSON data:
 ```bash
-./target/release/weather_oz --location "Tokyo" --json-output
+./target/release/weather_oz Tokyo --json-output
+```
+
+### 7. Visual Modes
+Try different output styles:
+```bash
+./target/release/weather_oz Istanbul -m sparkline     # 24-hour trend
+./target/release/weather_oz Istanbul -m html-preview  # Browser dashboard
+./target/release/weather_oz Istanbul -m emoji         # Rich colored output
 ```
 
 ---
@@ -102,10 +111,10 @@ Output machine-readable raw JSON data:
 │   ├── orchestrator.rs   # Core parallel race orchestrator & offline fallback logic
 │   ├── weather_cache.rs  # Persistence and local cache operations
 │   ├── geocoding/        # IP discovery and geocoding cache modules
-│   ├── providers/        # API integrations (OpenMeteo, MetNorway, wttr.in)
+│   ├── providers/        # 18 real HTTP weather API integrations
 │   ├── shared/           # Models, DTO structures, and shared configuration services
 │   ├── tui/              # TUI event loop, engine, rendering dashboard
-│   └── output.rs         # Formatted tables, JSON outputs, error renderers
+│   └── output.rs         # 10 visual modes (table, JSON, sparkline, emoji, HTML, etc.)
 ├── tests/                # Comprehensive integration, cached fallbacks & provider race test suites
 └── docs/                 # Detailed system architecture, development, and deployment docs
 ```

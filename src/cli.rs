@@ -1,5 +1,39 @@
 use clap::builder::styling::{AnsiColor, Styles};
-use clap::Parser;
+use clap::{Parser, ValueEnum};
+use clap_complete::Shell;
+
+/// Visual output layouts. Variant names map to kebab-case CLI values (e.g. `AsciiBanner` -> `ascii-banner`).
+#[derive(ValueEnum, Clone, Copy, Debug)]
+pub enum Mode {
+    Default,
+    Compact,
+    Inline,
+    Json,
+    Emoji,
+    AsciiBanner,
+    Sparkline,
+    BorderedCard,
+    Markdown,
+    HtmlPreview,
+}
+
+impl Mode {
+    /// Canonical lowercase string consumed by the output renderer's match.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Mode::Default => "default",
+            Mode::Compact => "compact",
+            Mode::Inline => "inline",
+            Mode::Json => "json",
+            Mode::Emoji => "emoji",
+            Mode::AsciiBanner => "ascii-banner",
+            Mode::Sparkline => "sparkline",
+            Mode::BorderedCard => "bordered-card",
+            Mode::Markdown => "markdown",
+            Mode::HtmlPreview => "html-preview",
+        }
+    }
+}
 
 // Custom color palette for the Clap CLI help output
 pub fn get_styles() -> Styles {
@@ -62,9 +96,9 @@ pub struct Args {
     #[arg(
         short = 'm',
         long = "mode",
-        help = "Visual output layout. Supported: default (table), compact (ASCII art), inline, json, emoji, ascii-banner, sparkline (24h trend), bordered-card, markdown, html-preview (launches browser)"
+        help = "Visual output layout. default (table), compact (ASCII art), inline, json, emoji, ascii-banner, sparkline (24h trend), bordered-card, markdown, html-preview (launches browser)"
     )]
-    pub mode: Option<String>,
+    pub mode: Option<Mode>,
 
     #[arg(
         short = 'e',
@@ -91,6 +125,12 @@ pub struct Args {
         help = "Override cache Time-To-Live in minutes. Set to 0 to disable cache and force a live API reload (default: 15)"
     )]
     pub cache_ttl: Option<u64>,
+
+    #[arg(
+        long = "completions",
+        help = "Generate a shell completion script for the given shell (bash, zsh, fish, powershell, elvish) and exit"
+    )]
+    pub completions: Option<Shell>,
 }
 
 pub fn validate_date(date_str: &str) -> Result<(), String> {

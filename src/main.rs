@@ -33,6 +33,15 @@ fn get_log_path() -> std::path::PathBuf {
 async fn main() {
     let args = Args::parse();
 
+    // Shell completion generation: print script for the requested shell and exit.
+    if let Some(shell) = args.completions {
+        use clap::CommandFactory;
+        let mut cmd = Args::command();
+        let bin = cmd.get_name().to_string();
+        clap_complete::generate(shell, &mut cmd, bin, &mut std::io::stdout());
+        return;
+    }
+
     // Load JSON config
     let config_service = crate::shared::domain::config::JsonConfigService::new();
     use crate::shared::domain::config::ConfigService;
@@ -105,7 +114,13 @@ async fn main() {
         .try_init();
 
     // 3. Create shared HTTP Client
-    let client = Arc::new(reqwest::Client::new());
+    let client = Arc::new(
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(6))
+            .connect_timeout(std::time::Duration::from_secs(3))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new()),
+    );
 
     // 4. Resolve Location Query (IP detection or CLI arg or user prompt)
     let mut resolved_location = None;
@@ -364,13 +379,16 @@ async fn main() {
         }
     }
 
-    let mode = args.mode.clone().unwrap_or_else(|| {
-        if args.json_output {
-            "json".to_string()
-        } else {
-            "default".to_string()
-        }
-    });
+    let mode = args
+        .mode
+        .map(|m| m.as_str().to_string())
+        .unwrap_or_else(|| {
+            if args.json_output {
+                "json".to_string()
+            } else {
+                "default".to_string()
+            }
+        });
 
     if mode != "default" {
         let today_obj = Utc::now().naive_utc().date();
