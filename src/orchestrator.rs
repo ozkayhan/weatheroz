@@ -12,7 +12,6 @@ use crate::providers::nws::NwsProvider;
 use crate::providers::openmeteo::OpenMeteoProvider;
 use crate::providers::openweathermap::OpenWeatherMapProvider;
 use crate::providers::pirateweather::PirateWeatherProvider;
-use crate::providers::simulated;
 use crate::providers::smhi::SmhiProvider;
 use crate::providers::tomorrowio::TomorrowIoProvider;
 use crate::providers::visualcrossing::VisualCrossingProvider;
@@ -134,7 +133,7 @@ pub async fn run_orchestrator(
         });
     }
 
-    // 3. Define and register all 30 providers
+    // 3. Define and register all 18 real HTTP providers
     let providers = vec![
         WeatherProvider::OpenMeteo(OpenMeteoProvider),
         WeatherProvider::MetNorway(MetNorwayProvider),
@@ -154,18 +153,6 @@ pub async fn run_orchestrator(
         WeatherProvider::Yandex(YandexProvider),
         WeatherProvider::AccuWeather(AccuWeatherProvider),
         WeatherProvider::PirateWeather(PirateWeatherProvider),
-        WeatherProvider::AerisWeather(simulated::AerisWeatherProvider),
-        WeatherProvider::StormGlass(simulated::StormGlassProvider),
-        WeatherProvider::MeteoBlue(simulated::MeteoBlueProvider),
-        WeatherProvider::Climacell(simulated::ClimacellProvider),
-        WeatherProvider::Ambee(simulated::AmbeeProvider),
-        WeatherProvider::OpenUv(simulated::OpenUvProvider),
-        WeatherProvider::Oikolab(simulated::OikolabProvider),
-        WeatherProvider::Weatherzone(simulated::WeatherzoneProvider),
-        WeatherProvider::Aemet(simulated::AemetProvider),
-        WeatherProvider::MeteoFrance(simulated::MeteoFranceProvider),
-        WeatherProvider::SmhiHistorical(simulated::SmhiHistoricalProvider),
-        WeatherProvider::Jma(simulated::JmaProvider),
     ];
 
     // 4. Run Weather Provider Race with Primary and Fallback tiers

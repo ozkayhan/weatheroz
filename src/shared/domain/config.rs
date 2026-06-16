@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -36,7 +35,7 @@ impl Default for AppConfig {
     }
 }
 
-#[async_trait]
+#[allow(async_fn_in_trait)]
 pub trait ConfigService: Send + Sync {
     async fn load_config(&self) -> Result<AppConfig, Box<dyn std::error::Error + Send + Sync>>;
     async fn save_config(
@@ -78,7 +77,6 @@ impl JsonConfigService {
     }
 }
 
-#[async_trait]
 impl ConfigService for JsonConfigService {
     async fn load_config(&self) -> Result<AppConfig, Box<dyn std::error::Error + Send + Sync>> {
         let mut config = if self.config_path.exists() {

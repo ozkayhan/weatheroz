@@ -32,6 +32,14 @@ The Weather OZ exposes robust, intuitive options for managing visual presentatio
 
 ---
 
+## 📊 Available Weather Providers
+
+The Weather OZ integrates **18 real HTTP weather providers** (OpenMeteo, MET Norway, wttr.in, Bright Sky, SMHI, FMI, NWS, Meteostat, Environment Canada, OpenWeatherMap, WeatherAPI, Weatherbit, Tomorrow.io, Visual Crossing, WeatherStack, Yandex, AccuWeather, Pirate Weather).
+
+Open-Meteo already blends dozens of upstream national weather models (DWD, NOAA/GFS, ECMWF, JMA, MET Norway, GEM…) internally, so a single race winner can itself represent a multi-model consensus.
+
+---
+
 ## ⚡ Parallel Weather Racing & Consensus Blending
 
 At the core of the Weather OZ is a state-of-the-art asynchronous engine designed to maximize uptime, performance, and accuracy:

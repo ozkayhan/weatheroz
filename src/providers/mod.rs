@@ -10,7 +10,6 @@ pub mod nws;
 pub mod openmeteo;
 pub mod openweathermap;
 pub mod pirateweather;
-pub mod simulated;
 pub mod smhi;
 pub mod tomorrowio;
 pub mod visualcrossing;
@@ -48,18 +47,6 @@ pub enum WeatherProvider {
     Yandex(yandex::YandexProvider),
     AccuWeather(accuweather::AccuWeatherProvider),
     PirateWeather(pirateweather::PirateWeatherProvider),
-    AerisWeather(simulated::AerisWeatherProvider),
-    StormGlass(simulated::StormGlassProvider),
-    MeteoBlue(simulated::MeteoBlueProvider),
-    Climacell(simulated::ClimacellProvider),
-    Ambee(simulated::AmbeeProvider),
-    OpenUv(simulated::OpenUvProvider),
-    Oikolab(simulated::OikolabProvider),
-    Weatherzone(simulated::WeatherzoneProvider),
-    Aemet(simulated::AemetProvider),
-    MeteoFrance(simulated::MeteoFranceProvider),
-    SmhiHistorical(simulated::SmhiHistoricalProvider),
-    Jma(simulated::JmaProvider),
     Mock(mock::MockProvider),
 }
 
@@ -140,18 +127,6 @@ impl WeatherProvider {
             WeatherProvider::Yandex(p) => p.name(),
             WeatherProvider::AccuWeather(p) => p.name(),
             WeatherProvider::PirateWeather(p) => p.name(),
-            WeatherProvider::AerisWeather(p) => p.name(),
-            WeatherProvider::StormGlass(p) => p.name(),
-            WeatherProvider::MeteoBlue(p) => p.name(),
-            WeatherProvider::Climacell(p) => p.name(),
-            WeatherProvider::Ambee(p) => p.name(),
-            WeatherProvider::OpenUv(p) => p.name(),
-            WeatherProvider::Oikolab(p) => p.name(),
-            WeatherProvider::Weatherzone(p) => p.name(),
-            WeatherProvider::Aemet(p) => p.name(),
-            WeatherProvider::MeteoFrance(p) => p.name(),
-            WeatherProvider::SmhiHistorical(p) => p.name(),
-            WeatherProvider::Jma(p) => p.name(),
             WeatherProvider::Mock(p) => p.name(),
         }
     }
@@ -195,18 +170,6 @@ impl WeatherProvider {
             WeatherProvider::Yandex(p) => p.fetch(ctx).await,
             WeatherProvider::AccuWeather(p) => p.fetch(ctx).await,
             WeatherProvider::PirateWeather(p) => p.fetch(ctx).await,
-            WeatherProvider::AerisWeather(p) => p.fetch(ctx).await,
-            WeatherProvider::StormGlass(p) => p.fetch(ctx).await,
-            WeatherProvider::MeteoBlue(p) => p.fetch(ctx).await,
-            WeatherProvider::Climacell(p) => p.fetch(ctx).await,
-            WeatherProvider::Ambee(p) => p.fetch(ctx).await,
-            WeatherProvider::OpenUv(p) => p.fetch(ctx).await,
-            WeatherProvider::Oikolab(p) => p.fetch(ctx).await,
-            WeatherProvider::Weatherzone(p) => p.fetch(ctx).await,
-            WeatherProvider::Aemet(p) => p.fetch(ctx).await,
-            WeatherProvider::MeteoFrance(p) => p.fetch(ctx).await,
-            WeatherProvider::SmhiHistorical(p) => p.fetch(ctx).await,
-            WeatherProvider::Jma(p) => p.fetch(ctx).await,
             WeatherProvider::Mock(p) => p.fetch(ctx).await,
         }
     }
