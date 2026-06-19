@@ -1,10 +1,10 @@
 use chrono::NaiveDate;
-use weather_oz::providers::base::BaseWeatherProvider;
-use weather_oz::providers::metnorway::MetNorwayProvider;
-use weather_oz::providers::models::{HourlyPoint, NormalizedWeatherData};
-use weather_oz::providers::openmeteo::OpenMeteoProvider;
-use weather_oz::providers::wttr::WttrProvider;
-use weather_oz::providers::{run_weather_race, WeatherProvider};
+use weatheroz::providers::base::BaseWeatherProvider;
+use weatheroz::providers::metnorway::MetNorwayProvider;
+use weatheroz::providers::models::{HourlyPoint, NormalizedWeatherData};
+use weatheroz::providers::openmeteo::OpenMeteoProvider;
+use weatheroz::providers::wttr::WttrProvider;
+use weatheroz::providers::{run_weather_race, WeatherProvider};
 
 #[tokio::test]
 async fn test_provider_implementations_exist() {
@@ -31,7 +31,7 @@ async fn test_weather_race_orchestrator() {
 
     let client = std::sync::Arc::new(reqwest::Client::new());
     let api_keys = std::collections::HashMap::new();
-    let ctx = weather_oz::providers::base::FetchContext {
+    let ctx = weatheroz::providers::base::FetchContext {
         client: client.clone(),
         lat: 41.0082,
         lon: 28.9784,

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
-use weather_oz::providers::base::FetchContext;
-use weather_oz::providers::mock::MockProvider;
-use weather_oz::providers::{run_weather_race, WeatherProvider};
+use weatheroz::providers::base::FetchContext;
+use weatheroz::providers::mock::MockProvider;
+use weatheroz::providers::{run_weather_race, WeatherProvider};
 
 #[tokio::test]
 async fn test_short_circuit_performance() {

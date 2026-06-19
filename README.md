@@ -1,4 +1,4 @@
-# 🌤️ Weather OZ & TUI Dashboard
+# 🌤️ weatheroz & TUI Dashboard
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
@@ -32,14 +32,25 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 ## Installation
-Clone the repository and build the binary in release mode:
+
+Install directly from crates.io:
 ```bash
-git clone https://github.com/ozkayhan/weather.git
-cd weather
+cargo install weatheroz
+```
+
+This puts the `weatheroz` command on your `PATH`.
+
+<details>
+<summary>Build from source</summary>
+
+```bash
+git clone https://github.com/ozkayhan/weatheroz.git
+cd weatheroz
 cargo build --release
 ```
 
-The compiled binary will be available at `./target/release/weather_oz`.
+The compiled binary will be available at `./target/release/weatheroz`.
+</details>
 
 ---
 
@@ -48,7 +59,7 @@ The compiled binary will be available at `./target/release/weather_oz`.
 ### 1. Interactive TUI Mode (Default)
 Run without arguments to open the immersive interactive dashboard:
 ```bash
-./target/release/weather_oz
+weatheroz
 ```
 * **Controls**: Press `q` or `Esc` to safely exit.
 * Automatically triggers geocoding, starts parallel requests, and draws a layout featuring current temperature, wind speed, precipitation, and live logs.
@@ -56,7 +67,7 @@ Run without arguments to open the immersive interactive dashboard:
 ### 2. Standard CLI Mode
 Request weather for a specific city:
 ```bash
-./target/release/weather_oz Istanbul
+weatheroz Istanbul
 ```
 
 ### 3. Core CLI Flags
@@ -75,27 +86,27 @@ Request weather for a specific city:
 ### 4. Date-Range Historical and Forecast Queries
 Query specific historical or future date ranges:
 ```bash
-./target/release/weather_oz London --from-date 2026-05-20 --to-date 2026-05-22
+weatheroz London --from-date 2026-05-20 --to-date 2026-05-22
 ```
 
 ### 5. Verbose & Parallel Performance Tracing
 See the results of the parallel provider race in real time:
 ```bash
-./target/release/weather_oz "New York" --verbose
+weatheroz "New York" --verbose
 ```
 
 ### 6. Automated JSON Integrations
 Output machine-readable raw JSON data:
 ```bash
-./target/release/weather_oz Tokyo --json-output
+weatheroz Tokyo --json-output
 ```
 
 ### 7. Visual Modes
 Try different output styles:
 ```bash
-./target/release/weather_oz Istanbul -m sparkline     # 24-hour trend
-./target/release/weather_oz Istanbul -m html-preview  # Browser dashboard
-./target/release/weather_oz Istanbul -m emoji         # Rich colored output
+weatheroz Istanbul -m sparkline     # 24-hour trend
+weatheroz Istanbul -m html-preview  # Browser dashboard
+weatheroz Istanbul -m emoji         # Rich colored output
 ```
 
 ---

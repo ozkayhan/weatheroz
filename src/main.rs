@@ -23,7 +23,7 @@ fn get_log_path() -> std::path::PathBuf {
         std::path::PathBuf::from(".")
     };
     path.push(".cache");
-    path.push("weather_oz");
+    path.push("weatheroz");
     let _ = std::fs::create_dir_all(&path);
     path.push("weather.log");
     path
@@ -178,14 +178,14 @@ async fn main() {
     // 5. Verbose Geocoding Cache check output (TUI is inactive)
     if args.verbose && !use_tui && resolved_location.is_none() {
         let query_key = location_query.to_lowercase().trim().to_string();
-        let mut custom_path = std::env::var("WEATHER_OZ_CACHE_PATH")
+        let mut custom_path = std::env::var("WEATHEROZ_CACHE_PATH")
             .ok()
             .map(std::path::PathBuf::from);
         if custom_path.is_none() {
             if let Ok(home) = std::env::var("HOME") {
                 let mut path = std::path::PathBuf::from(home);
                 path.push(".cache");
-                path.push("weather_oz");
+                path.push("weatheroz");
                 path.push("geo_cache.json");
                 custom_path = Some(path);
             }

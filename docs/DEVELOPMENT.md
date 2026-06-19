@@ -1,6 +1,6 @@
 # Developer Guide
 
-This document outlines the local setup, tooling, and testing instructions for developers working on the Weather OZ & TUI codebase.
+This document outlines the local setup, tooling, and testing instructions for developers working on the weatheroz & TUI codebase.
 
 ---
 
@@ -79,12 +79,12 @@ The application utilizes `tracing` to capture and stream operational logs.
 
 ### Tracing Log Files
 Logs are written in standard formats to:
-- **macOS/Linux**: `~/.cache/weather_oz/weather.log`
-- **Fallback**: `./.cache/weather_oz/weather.log`
+- **macOS/Linux**: `~/.cache/weatheroz/weather.log`
+- **Fallback**: `./.cache/weatheroz/weather.log`
 
 You can tail this file during development to inspect parallel requests, geocoding lookups, and cache resolutions:
 ```bash
-tail -f ~/.cache/weather_oz/weather.log
+tail -f ~/.cache/weatheroz/weather.log
 ```
 
 ### Environment Filters

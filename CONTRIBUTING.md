@@ -1,4 +1,4 @@
-# Contributing to Weather OZ & TUI
+# Contributing to weatheroz & TUI
 
 First off, thank you for taking the time to contribute! Contributions from the community help make this tool faster, more robust, and more delightful to use.
 
@@ -16,8 +16,8 @@ To build and test the project locally, you need the standard Rust toolchain:
    ```
 2. **Clone the repository**:
    ```bash
-   git clone https://github.com/ozkayhan/weather.git
-   cd weather
+   git clone https://github.com/ozkayhan/weatheroz.git
+   cd weatheroz
    ```
 3. **Verify the installation**:
    ```bash

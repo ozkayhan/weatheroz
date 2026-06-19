@@ -1,11 +1,11 @@
 [package]
-name = "weather_oz"
+name = "weatheroz"
 version = "0.1.0"
 edition = "2021"
 description = "A high-performance parallel weather CLI and TUI application written in Rust."
 license = "MIT"
-repository = "https://github.com/ozkayhan/weather"
-homepage = "https://github.com/ozkayhan/weather"
+repository = "https://github.com/ozkayhan/weatheroz"
+homepage = "https://github.com/ozkayhan/weatheroz"
 readme = "README.md"
 keywords = ["weather", "cli", "tui", "rust", "ratatui"]
 categories = ["command-line-utilities"]
