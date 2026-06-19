@@ -62,7 +62,7 @@ impl JsonConfigService {
     }
 
     fn get_default_path() -> PathBuf {
-        if let Ok(custom_path) = std::env::var("WEATHER_OZ_CONFIG_PATH") {
+        if let Ok(custom_path) = std::env::var("WEATHEROZ_CONFIG_PATH") {
             return PathBuf::from(custom_path);
         }
         let mut path = if let Ok(home) = std::env::var("HOME") {
@@ -71,7 +71,7 @@ impl JsonConfigService {
             PathBuf::from(".")
         };
         path.push(".config");
-        path.push("weather_oz");
+        path.push("weatheroz");
         path.push("config.json");
         path
     }

@@ -1,22 +1,22 @@
-# Weather OZ - Usage Guide
+# weatheroz - Usage Guide
 
 A highly polished, ultra-performant command-line weather client featuring parallel multi-provider racing, dynamic caching, consensus-based weather blending, extreme data enrichment, and 10 custom visual output modes.
 
 ---
 
-## 🚀 Installation & Build
+## 🚀 Installation
 
-Build the project using standard cargo toolchain:
+Install from crates.io and the `weatheroz` command lands on your `PATH`:
 ```bash
-cargo build --release
+cargo install weatheroz
 ```
-The optimized binary will be generated at `./target/release/weather_oz`.
+Or build from source with `cargo build --release` (binary at `./target/release/weatheroz`).
 
 ---
 
 ## 🛠️ CLI Flags & Arguments
 
-The Weather OZ exposes robust, intuitive options for managing visual presentation, forecast parameters, cache rules, and coordinates:
+weatheroz exposes robust, intuitive options for managing visual presentation, forecast parameters, cache rules, and coordinates:
 
 | Flag / Option | Description | Defaults |
 |---|---|---|
@@ -34,7 +34,7 @@ The Weather OZ exposes robust, intuitive options for managing visual presentatio
 
 ## 📊 Available Weather Providers
 
-The Weather OZ integrates **18 real HTTP weather providers** (OpenMeteo, MET Norway, wttr.in, Bright Sky, SMHI, FMI, NWS, Meteostat, Environment Canada, OpenWeatherMap, WeatherAPI, Weatherbit, Tomorrow.io, Visual Crossing, WeatherStack, Yandex, AccuWeather, Pirate Weather).
+weatheroz integrates **18 real HTTP weather providers** (OpenMeteo, MET Norway, wttr.in, Bright Sky, SMHI, FMI, NWS, Meteostat, Environment Canada, OpenWeatherMap, WeatherAPI, Weatherbit, Tomorrow.io, Visual Crossing, WeatherStack, Yandex, AccuWeather, Pirate Weather).
 
 Open-Meteo already blends dozens of upstream national weather models (DWD, NOAA/GFS, ECMWF, JMA, MET Norway, GEM…) internally, so a single race winner can itself represent a multi-model consensus.
 
@@ -42,7 +42,7 @@ Open-Meteo already blends dozens of upstream national weather models (DWD, NOAA/
 
 ## ⚡ Parallel Weather Racing & Consensus Blending
 
-At the core of the Weather OZ is a state-of-the-art asynchronous engine designed to maximize uptime, performance, and accuracy:
+At the core of weatheroz is a state-of-the-art asynchronous engine designed to maximize uptime, performance, and accuracy:
 
 *   **Parallel Multi-Provider Racing:** The client fires asynchronous HTTP requests to all configured weather providers in parallel. As soon as the first successful response is received, the loop finishes to guarantee lightning-fast response times.
 *   **100ms Consensus Window:** After the first successful response is received, the client waits for a tiny 100ms grace period to allow other fast providers to complete their fetches. Uncompleted slow or hanging requests are immediately dropped to prevent terminal lag.
@@ -57,52 +57,52 @@ At the core of the Weather OZ is a state-of-the-art asynchronous engine designed
 ## 🎨 The 10 Visual Output Modes
 
 ### 1. `default` (Standard Table)
-- **Usage:** `./weather_oz Istanbul` (or `-m default`)
+- **Usage:** `weatheroz Istanbul` (or `-m default`)
 - **Aesthetic:** Clean, standard-width tabular grid listing temperature, wind speed, apparent temperature, humidity, precipitation probability, cloudiness, and condition.
 
 ### 2. `compact` (Neofetch Style ASCII Art Card)
-- **Usage:** `./weather_oz Istanbul -m compact`
+- **Usage:** `weatheroz Istanbul -m compact`
 - **Aesthetic:** Features custom-drawn weather glyphs (sun, clouds, rain clouds, storm clouds) placed side-by-side with formatted metadata. Designed for system dashboards or neofetch-style custom terminal splash screens.
 
 ### 3. `inline` (Status Bar Integration)
-- **Usage:** `./weather_oz Istanbul -m inline`
+- **Usage:** `weatheroz Istanbul -m inline`
 - **Aesthetic:** A single string line with zero trailing linebreaks, optimized for integration with terminal status bars (e.g., tmux, polybar, i3blocks):
   `📍 Istanbul: 🌡️ 16.3°C (Feels 17.3°C) | ⛈️ Thunderstorm | 💧 96% | 💨 6.8 km/h SW`
 
 ### 4. `json` (Automated Schemas)
-- **Usage:** `./weather_oz Istanbul -m json`
+- **Usage:** `weatheroz Istanbul -m json`
 - **Aesthetic:** Fully structured JSON schema containing all spatial parameters, resolved coordinates, and full hourly arrays. Ideal for piping into jq or python automation scripts.
 
 ### 5. `emoji` (Rich Graphic Visualizer)
-- **Usage:** `./weather_oz Istanbul -m emoji`
+- **Usage:** `weatheroz Istanbul -m emoji`
 - **Aesthetic:** A highly vibrant, colorful terminal card utilizing custom visual panels to separate and highlight each individual meteorological metric.
 
 ### 6. `ascii-banner` (Giant Banner Display)
-- **Usage:** `./weather_oz Istanbul -m ascii-banner`
+- **Usage:** `weatheroz Istanbul -m ascii-banner`
 - **Aesthetic:** Renders a giant, custom-padded multi-line ASCII block numbers display representing the resolved temperature, visible from feet away in a workspace terminal.
 
 ### 7. `sparkline` (Chronological Trend Indicator)
-- **Usage:** `./weather_oz Istanbul -m sparkline`
+- **Usage:** `weatheroz Istanbul -m sparkline`
 - **Aesthetic:** Uses fine Unicode 1/8th-height bar characters (` ▂▃▄▅▆▇█`) to draw a 24-hour chronological temperature trend line directly inside the terminal.
 
 ### 8. `bordered-card` (Clean UI Container)
-- **Usage:** `./weather_oz Istanbul -m bordered-card`
+- **Usage:** `weatheroz Istanbul -m bordered-card`
 - **Aesthetic:** An elegant, double-lined terminal enclosure boxing the weather forecast details into a structured graphic component.
 
 ### 9. `markdown` (Render-Ready Markdown)
-- **Usage:** `./weather_oz Istanbul -m markdown`
+- **Usage:** `weatheroz Istanbul -m markdown`
 - **Aesthetic:** Outputs highly semantic GitHub-flavored markdown. Perfect for redirecting into logs, readme files, or piping into static site generators.
 
 ### 10. `html-preview` (Interactive Premium Dashboard)
-- **Usage:** `./weather_oz Istanbul -m html-preview`
-- **Aesthetic:** Generates a stunning glassmorphic web page at `~/.cache/weather_oz/preview.html` and **automatically launches it** in the user's default browser on macOS. Features gradient dark-mode styling, subtle transitions, and premium card layouts.
+- **Usage:** `weatheroz Istanbul -m html-preview`
+- **Aesthetic:** Generates a stunning glassmorphic web page at `~/.cache/weatheroz/preview.html` and **automatically launches it** in the user's default browser on macOS. Features gradient dark-mode styling, subtle transitions, and premium card layouts.
 
 ---
 
 ## ⚙️ Configuration File Setup
 
-The Weather OZ looks for a global JSON configuration file at:
-`~/.config/weather_oz/config.json`
+weatheroz looks for a global JSON configuration file at:
+`~/.config/weatheroz/config.json`
 
 ### Template `config.json`
 ```json
@@ -128,7 +128,7 @@ The Weather OZ looks for a global JSON configuration file at:
 ```
 
 ### Environment Overrides
-To keep API secrets out of config files or to run the Weather OZ inside CI/CD pipelines, you can set the following environment variables:
+To keep API secrets out of config files or to run weatheroz inside CI/CD pipelines, you can set the following environment variables:
 - `WEATHER_KEY_OPENWEATHERMAP`
 - `WEATHER_KEY_WEATHERAPI`
 - `WEATHER_KEY_WEATHERBIT`

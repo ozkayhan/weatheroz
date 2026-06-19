@@ -710,7 +710,7 @@ pub fn render_mode(
                 PathBuf::from(".")
             };
             path.push(".cache");
-            path.push("weather_oz");
+            path.push("weatheroz");
             let _ = std::fs::create_dir_all(&path);
             path.push("preview.html");
 
@@ -782,7 +782,7 @@ pub fn print_error_block(error_msg: &str) {
     {
         suggestion = "An internet connection error occurred. Check your network or run without network-dependent flags.".to_string();
     } else if lower.contains("api key") || lower.contains("unauthorized") {
-        suggestion = "An API key issue was encountered. Verify your configuration in '~/.config/weather_oz/config.json' or set the appropriate environment variables.".to_string();
+        suggestion = "An API key issue was encountered. Verify your configuration in '~/.config/weatheroz/config.json' or set the appropriate environment variables.".to_string();
     }
 
     let err_line = format!("🚨 ERROR: {}", error_msg);
