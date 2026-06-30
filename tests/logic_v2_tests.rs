@@ -43,6 +43,7 @@ async fn test_short_circuit_performance() {
         enrich: false,
         days: 1,
         minute_resolution: false,
+        timezone: None,
     };
 
     let start = Instant::now();
@@ -133,6 +134,7 @@ async fn test_consensus_blending_correctness() {
         enrich: false,
         days: 1,
         minute_resolution: false,
+        timezone: None,
     };
 
     let start = Instant::now();
@@ -230,6 +232,7 @@ async fn test_resilience_missing_keys() {
         enrich: false,
         days: 1,
         minute_resolution: false,
+        timezone: None,
     };
 
     let (weather_data, stats, winner_name) = run_weather_race(

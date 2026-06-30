@@ -758,6 +758,17 @@ fn get_sparkline(temps: &[f64]) -> String {
     out
 }
 
+/// Prints query-pipeline results: plain tab-separated values, optionally with a header row.
+/// Kept deliberately simple (no box-drawing) so output is easy to pipe into other tools.
+pub fn print_query_rows(header: &[String], rows: &[Vec<String>], no_headers: bool) {
+    if !no_headers && !header.is_empty() {
+        println!("{}", header.join("\t"));
+    }
+    for row in rows {
+        println!("{}", row.join("\t"));
+    }
+}
+
 pub fn print_error_block(error_msg: &str) {
     let mut suggestion =
         "Please double check your command arguments or run 'weather --help' for details."

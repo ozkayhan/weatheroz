@@ -629,6 +629,7 @@ mod tests {
             enrich: false,
             days: 1,
             minute_resolution: false,
+            timezone: None,
         };
 
         let (weather_data, stats, winner_name) = run_weather_race(

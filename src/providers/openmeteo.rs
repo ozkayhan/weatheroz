@@ -63,21 +63,26 @@ impl OpenMeteoProvider {
         end: &str,
         enrich: bool,
         minute_resolution: bool,
+        timezone: Option<&str>,
     ) -> String {
         let vars = if enrich {
             HOURLY_VARS_ENRICHED
         } else {
             HOURLY_VARS_BASIC
         };
+        // Open-Meteo accepts any IANA tz name here directly, so an explicit --timezone just
+        // overrides "auto" and the API returns already-localized timestamps. No client-side
+        // tz conversion needed.
+        let tz = urlencoding::encode(timezone.unwrap_or("auto"));
         if minute_resolution {
             format!(
-                "{}?latitude={}&longitude={}&start_date={}&end_date={}&minutely_15={}&timezone=auto",
-                base, lat, lon, start, end, MINUTELY_VARS
+                "{}?latitude={}&longitude={}&start_date={}&end_date={}&minutely_15={}&timezone={}",
+                base, lat, lon, start, end, MINUTELY_VARS, tz
             )
         } else {
             format!(
-                "{}?latitude={}&longitude={}&start_date={}&end_date={}&hourly={}&timezone=auto",
-                base, lat, lon, start, end, vars
+                "{}?latitude={}&longitude={}&start_date={}&end_date={}&hourly={}&timezone={}",
+                base, lat, lon, start, end, vars, tz
             )
         }
     }
@@ -446,6 +451,7 @@ impl BaseWeatherProvider for OpenMeteoProvider {
                 ctx.end_date,
                 ctx.enrich,
                 ctx.minute_resolution,
+                ctx.timezone,
             );
             self.fetch_url(ctx.client.clone(), &url).await?
         } else if s >= today && e <= forecast_limit {
@@ -457,6 +463,7 @@ impl BaseWeatherProvider for OpenMeteoProvider {
                 ctx.end_date,
                 ctx.enrich,
                 ctx.minute_resolution,
+                ctx.timezone,
             );
             self.fetch_url(ctx.client.clone(), &url).await?
         } else {
@@ -472,6 +479,7 @@ impl BaseWeatherProvider for OpenMeteoProvider {
                 &archive_end,
                 ctx.enrich,
                 ctx.minute_resolution,
+                ctx.timezone,
             );
             let forecast_url = self.build_url(
                 FORECAST_BASE,
@@ -481,6 +489,7 @@ impl BaseWeatherProvider for OpenMeteoProvider {
                 ctx.end_date,
                 ctx.enrich,
                 ctx.minute_resolution,
+                ctx.timezone,
             );
 
             let (archive_resp, forecast_resp) = tokio::join!(
@@ -509,11 +518,29 @@ mod tests {
             "2026-05-19",
             true,
             false,
+            None,
         );
         assert!(url.contains("latitude=41.0082"));
         assert!(url.contains("longitude=28.9784"));
         assert!(url.contains("start_date=2026-05-19"));
         assert!(url.contains("end_date=2026-05-19"));
         assert!(url.contains("uv_index"));
+        assert!(url.contains("timezone=auto"));
+    }
+
+    #[test]
+    fn test_openmeteo_url_builder_explicit_timezone() {
+        let provider = OpenMeteoProvider;
+        let url = provider.build_url(
+            "https://api.open-meteo.com/v1/forecast",
+            41.0082,
+            28.9784,
+            "2026-05-19",
+            "2026-05-19",
+            false,
+            false,
+            Some("Europe/Istanbul"),
+        );
+        assert!(url.contains("timezone=Europe%2FIstanbul"));
     }
 }

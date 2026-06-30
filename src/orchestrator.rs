@@ -87,6 +87,8 @@ pub async fn run_orchestrator(
             resolved.longitude,
             &start_date,
             &end_date,
+            args.enrich || config.enrich_data.unwrap_or(false),
+            args.minute || config.minute_updates.unwrap_or(false),
             Some(ttl_seconds),
         )
         .await
@@ -166,6 +168,7 @@ pub async fn run_orchestrator(
         enrich: args.enrich || config.enrich_data.unwrap_or(false),
         days: days_count,
         minute_resolution: args.minute || config.minute_updates.unwrap_or(false),
+        timezone: args.timezone.as_deref(),
     };
 
     let default_race = vec![
@@ -188,6 +191,8 @@ pub async fn run_orchestrator(
                 resolved.longitude,
                 &start_date,
                 &end_date,
+                ctx.enrich,
+                ctx.minute_resolution,
                 &weather_data,
             )
             .await;

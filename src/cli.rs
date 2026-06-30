@@ -127,6 +127,69 @@ pub struct Args {
     pub cache_ttl: Option<u64>,
 
     #[arg(
+        long = "timezone",
+        help = "IANA timezone for hourly timestamps (e.g. Europe/Istanbul). Default: location's local timezone"
+    )]
+    pub timezone: Option<String>,
+
+    #[arg(
+        long = "from-hour",
+        help = "Query pipeline: keep only hours >= this value (0-23)"
+    )]
+    pub from_hour: Option<u32>,
+
+    #[arg(
+        long = "to-hour",
+        help = "Query pipeline: keep only hours < this value (1-24)"
+    )]
+    pub to_hour: Option<u32>,
+
+    #[arg(
+        long = "fields",
+        help = "Query pipeline: comma-separated columns to output (e.g. temp,humidity). Switches output to a plain query table"
+    )]
+    pub fields: Option<String>,
+
+    #[arg(
+        long = "where",
+        help = "Query pipeline: filter hours by a 'field<op>value' expression (e.g. temp>20)"
+    )]
+    pub where_expr: Option<String>,
+
+    #[arg(
+        long = "aggregate",
+        help = "Query pipeline: compute a single 'field:func' aggregate (min, max, avg, sum, count) instead of listing rows"
+    )]
+    pub aggregate: Option<String>,
+
+    #[arg(
+        long = "sort",
+        help = "Query pipeline: sort rows by field, prefix with '-' for descending (e.g. -temp)"
+    )]
+    pub sort: Option<String>,
+
+    #[arg(long = "limit", help = "Query pipeline: keep at most this many rows")]
+    pub limit: Option<usize>,
+
+    #[arg(
+        long = "no-headers",
+        help = "Query pipeline: omit the header row from query table output"
+    )]
+    pub no_headers: bool,
+
+    #[arg(
+        long = "precision",
+        help = "Query pipeline: number of decimal places for numeric fields"
+    )]
+    pub precision: Option<usize>,
+
+    #[arg(
+        long = "dry-run",
+        help = "Query pipeline: print the resolved query plan and exit without fetching weather data"
+    )]
+    pub dry_run: bool,
+
+    #[arg(
         long = "completions",
         help = "Generate a shell completion script for the given shell (bash, zsh, fish, powershell, elvish) and exit"
     )]
@@ -138,4 +201,11 @@ pub fn validate_date(date_str: &str) -> Result<(), String> {
         return Err("Date must be in YYYY-MM-DD format".to_string());
     }
     Ok(())
+}
+
+pub fn validate_timezone(tz_str: &str) -> Result<(), String> {
+    tz_str
+        .parse::<chrono_tz::Tz>()
+        .map(|_| ())
+        .map_err(|_| format!("Unknown IANA timezone: '{}' (e.g. Europe/Istanbul)", tz_str))
 }

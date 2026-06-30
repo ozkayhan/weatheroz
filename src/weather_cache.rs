@@ -86,27 +86,42 @@ async fn get_weather_cache() -> &'static RwLock<HashMap<String, WeatherCacheEntr
     cache_lock
 }
 
-fn make_cache_key(lat: f64, lon: f64, start_date: &str, end_date: &str) -> String {
+// ponytail: enrich/minute_resolution must be part of the key, else a cache write made with
+// one combination of flags gets served back for a request with different flags (e.g. --enrich
+// toggled on/off between two runs within the TTL window returns data missing/has the wrong shape).
+fn make_cache_key(
+    lat: f64,
+    lon: f64,
+    start_date: &str,
+    end_date: &str,
+    enrich: bool,
+    minute_resolution: bool,
+) -> String {
     format!(
-        "{:.4}:{:.4}:{}:{}",
+        "{:.4}:{:.4}:{}:{}:{}:{}",
         lat,
         lon,
         start_date.trim(),
-        end_date.trim()
+        end_date.trim(),
+        enrich,
+        minute_resolution
     )
 }
 
 /// Retrieves a weather cache entry.
 /// Returns `Some((data, is_fresh, timestamp))` if the cache entry exists, where `is_fresh` is true if the entry is within the specified TTL.
+#[allow(clippy::too_many_arguments)]
 pub async fn get_cached_weather(
     lat: f64,
     lon: f64,
     start_date: &str,
     end_date: &str,
+    enrich: bool,
+    minute_resolution: bool,
     ttl_seconds: Option<f64>,
 ) -> Option<(NormalizedWeatherData, bool, f64)> {
     let ttl = ttl_seconds.unwrap_or(WEATHER_CACHE_TTL_SECONDS);
-    let key = make_cache_key(lat, lon, start_date, end_date);
+    let key = make_cache_key(lat, lon, start_date, end_date, enrich, minute_resolution);
     let cache_lock = get_weather_cache().await;
     {
         let reader = cache_lock.read().await;
@@ -147,14 +162,17 @@ pub async fn get_cached_weather(
 }
 
 /// Saves weather data to the cache.
+#[allow(clippy::too_many_arguments)]
 pub async fn save_cached_weather(
     lat: f64,
     lon: f64,
     start_date: &str,
     end_date: &str,
+    enrich: bool,
+    minute_resolution: bool,
     data: &NormalizedWeatherData,
 ) {
-    let key = make_cache_key(lat, lon, start_date, end_date);
+    let key = make_cache_key(lat, lon, start_date, end_date, enrich, minute_resolution);
     let cache_lock = get_weather_cache().await;
     let mut writer = cache_lock.write().await;
 

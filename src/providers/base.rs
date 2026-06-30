@@ -12,6 +12,9 @@ pub struct FetchContext<'a> {
     pub enrich: bool,
     pub days: u32,
     pub minute_resolution: bool,
+    /// IANA timezone override (e.g. "Europe/Istanbul"). `None` means "use the provider's
+    /// auto-detected local timezone for the coordinates". Only Open-Meteo honors this today.
+    pub timezone: Option<&'a str>,
 }
 
 #[allow(async_fn_in_trait)]
