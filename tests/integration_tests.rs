@@ -133,10 +133,15 @@ async fn test_cli_historical_date() {
 
 #[tokio::test]
 async fn test_cli_mixed_date_range() {
+    // to-date must stay in the future relative to whenever this test runs, so compute it
+    // relative to today instead of using a fixed date that eventually falls into the past.
+    let to_date = (chrono::Utc::now().naive_utc().date() + chrono::Duration::days(3))
+        .format("%Y-%m-%d")
+        .to_string();
     let output = Command::new("./target/debug/weatheroz")
         .arg("istanbul")
         .arg("--from-date=2025-01-01")
-        .arg("--to-date=2026-06-01")
+        .arg(format!("--to-date={}", to_date))
         .output()
         .expect("Failed to execute weatheroz");
 
