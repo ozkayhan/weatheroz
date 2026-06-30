@@ -42,9 +42,9 @@ async fn test_weather_cache_save_and_retrieve_fresh() {
         }],
     };
 
-    save_cached_weather(41.0138, 28.9497, "2026-05-21", "2026-05-21", &dummy_data).await;
+    save_cached_weather(41.0138, 28.9497, "2026-05-21", "2026-05-21", false, false, &dummy_data).await;
 
-    let retrieved = get_cached_weather(41.0138, 28.9497, "2026-05-21", "2026-05-21", None).await;
+    let retrieved = get_cached_weather(41.0138, 28.9497, "2026-05-21", "2026-05-21", false, false, None).await;
     assert!(retrieved.is_some());
     let (data, is_fresh, _ts) = retrieved.unwrap();
     assert!(is_fresh);
@@ -82,8 +82,8 @@ async fn test_weather_cache_stale() {
     let stale_secs = now_secs - (16.0 * 60.0);
 
     let key = format!(
-        "{:.4}:{:.4}:{}:{}",
-        41.0138, 28.9497, "2026-05-21", "2026-05-21"
+        "{:.4}:{:.4}:{}:{}:{}:{}",
+        41.0138, 28.9497, "2026-05-21", "2026-05-21", false, false
     );
     let mut cache = std::collections::HashMap::new();
 
@@ -101,7 +101,7 @@ async fn test_weather_cache_stale() {
     );
     std::fs::write(&cache_path, serde_json::to_string_pretty(&cache).unwrap()).unwrap();
 
-    let retrieved = get_cached_weather(41.0138, 28.9497, "2026-05-21", "2026-05-21", None).await;
+    let retrieved = get_cached_weather(41.0138, 28.9497, "2026-05-21", "2026-05-21", false, false, None).await;
     assert!(
         retrieved.is_some(),
         "retrieved cache is None; expected Some"
@@ -143,7 +143,7 @@ fn test_cli_weather_cache_hit() {
         .date()
         .format("%Y-%m-%d")
         .to_string();
-    let key = format!("{:.4}:{:.4}:{}:{}", 45.1234, 12.1234, today_str, today_str);
+    let key = format!("{:.4}:{:.4}:{}:{}:{}:{}", 45.1234, 12.1234, today_str, today_str, false, false);
     let weather_cache_content = format!(
         r#"{{"{}":{{"data":{{"provider_name":"CachedProvider","hourly":[]}},"timestamp":{}}}}}"#,
         key, now_secs
@@ -203,7 +203,7 @@ fn test_cli_offline_fallback() {
         .date()
         .format("%Y-%m-%d")
         .to_string();
-    let key = format!("{:.4}:{:.4}:{}:{}", 99.0, 199.0, today_str, today_str);
+    let key = format!("{:.4}:{:.4}:{}:{}:{}:{}", 99.0, 199.0, today_str, today_str, false, false);
     let weather_cache_content = format!(
         r#"{{"{}":{{"data":{{"provider_name":"StaleProvider","hourly":[]}},"timestamp":{}}}}}"#,
         key, stale_secs

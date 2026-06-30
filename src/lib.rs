@@ -3,6 +3,7 @@ pub mod geocoding;
 pub mod orchestrator;
 pub mod output;
 pub mod providers;
+pub mod query;
 pub mod shared;
 pub mod tui;
 pub mod weather_cache;

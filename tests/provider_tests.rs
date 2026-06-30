@@ -41,6 +41,7 @@ async fn test_weather_race_orchestrator() {
         enrich: false,
         days: 1,
         minute_resolution: false,
+        timezone: None,
     };
     let race_list = vec![
         "Open-Meteo".to_string(),

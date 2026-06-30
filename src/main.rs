@@ -3,6 +3,7 @@ pub mod geocoding;
 pub mod orchestrator;
 pub mod output;
 pub mod providers;
+pub mod query;
 pub mod shared;
 pub mod tui;
 pub mod weather_cache;
@@ -12,7 +13,7 @@ use clap::Parser;
 use std::io::IsTerminal;
 use std::sync::{Arc, Mutex};
 
-use crate::cli::{validate_date, Args};
+use crate::cli::{validate_date, validate_timezone, Args};
 use crate::output::{print_date_range_info, print_hourly_table, print_location_info};
 use crate::tui::ProcessState;
 
@@ -58,6 +59,30 @@ async fn main() {
     if let Err(e) = validate_date(&end_date) {
         crate::output::print_error_block(&e);
         std::process::exit(1);
+    }
+    if let Some(tz) = &args.timezone {
+        if let Err(e) = validate_timezone(tz) {
+            crate::output::print_error_block(&e);
+            std::process::exit(1);
+        }
+    }
+
+    if args.dry_run {
+        println!(
+            "Query plan: location={:?} from={} to={} timezone={} from_hour={:?} to_hour={:?} fields={:?} where={:?} aggregate={:?} sort={:?} limit={:?}",
+            args.location,
+            start_date,
+            end_date,
+            args.timezone.as_deref().unwrap_or("auto"),
+            args.from_hour,
+            args.to_hour,
+            args.fields,
+            args.where_expr,
+            args.aggregate,
+            args.sort,
+            args.limit,
+        );
+        return;
     }
 
     let use_tui = !args.json_output && !args.verbose && std::io::stdout().is_terminal();
@@ -377,6 +402,62 @@ async fn main() {
                 result.winner_name, winner_time
             );
         }
+    }
+
+    // Query pipeline: activates when --fields or --aggregate is given, and takes over output.
+    // ponytail: --from-hour/--to-hour/--where/--sort/--limit only apply within this path; using
+    // them without --fields/--aggregate is a no-op. Widen if a use case needs that combo.
+    if args.fields.is_some() || args.aggregate.is_some() {
+        let mut points = crate::query::time_filter::filter_by_hour(
+            &result.weather_data.hourly,
+            args.from_hour,
+            args.to_hour,
+        );
+
+        if let Some(expr) = &args.where_expr {
+            match crate::query::predicate::parse_and_filter(&points, expr) {
+                Ok(filtered) => points = filtered,
+                Err(e) => {
+                    crate::output::print_error_block(&e);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        if let Some(expr) = &args.aggregate {
+            match crate::query::aggregate::aggregate(&points, expr) {
+                Ok((label, value)) => {
+                    let precision = args.precision.unwrap_or(1);
+                    println!("{:.*}", precision, value);
+                    let _ = label;
+                }
+                Err(e) => {
+                    crate::output::print_error_block(&e);
+                    std::process::exit(1);
+                }
+            }
+            return;
+        }
+
+        points = match crate::query::sort::sort_and_limit(points, args.sort.as_deref(), args.limit) {
+            Ok(sorted) => sorted,
+            Err(e) => {
+                crate::output::print_error_block(&e);
+                std::process::exit(1);
+            }
+        };
+
+        let field_names: Vec<String> = args
+            .fields
+            .as_deref()
+            .unwrap_or("time")
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .collect();
+        let (header, rows) =
+            crate::query::field_select::select_fields(&points, &field_names, args.precision);
+        crate::output::print_query_rows(&header, &rows, args.no_headers);
+        return;
     }
 
     let mode = args
