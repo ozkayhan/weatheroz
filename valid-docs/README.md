@@ -1,6 +1,6 @@
 # valid-docs — weatheroz
 
-> **Synced to:** `e752c2cbebe0f695a66a7a16a3a0577032600c2d` (`e752c2c`) — 2026-06-22
+> **Synced to:** `1cb1b26` — 2026-07-01
 > Regenerate/refresh with the `update-docs` skill. These docs describe the
 > codebase at the commit above; if HEAD has moved, re-run to reconcile.
 
